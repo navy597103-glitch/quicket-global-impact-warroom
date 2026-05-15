@@ -1,19 +1,22 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import {
   Activity,
-  AlertTriangle,
-  ArrowUpRight,
+  BarChart3,
   Building2,
+  CircleDollarSign,
   Factory,
   Globe2,
-  Leaf,
+  Layers3,
   Lightbulb,
   MapPin,
+  MousePointer2,
   Network,
-  PackageCheck,
   ShieldCheck,
-  Truck,
+  Sparkles,
+  Trees,
   Zap,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react'
 import {
   Area,
@@ -22,7 +25,6 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  Legend,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -31,596 +33,715 @@ import {
   YAxis,
 } from 'recharts'
 
-const projectData = [
+const typeConfig = {
+  'Bay Light': { label: '天井燈', color: '#0891b2', bg: 'bg-cyan-50', text: 'text-cyan-700' },
+  Streetlight: { label: '路燈', color: '#2563eb', bg: 'bg-blue-50', text: 'text-blue-700' },
+  'Flood Light': { label: '投射燈', color: '#16a34a', bg: 'bg-green-50', text: 'text-green-700' },
+  Downlight: { label: '崁燈', color: '#9333ea', bg: 'bg-purple-50', text: 'text-purple-700' },
+  'Special Lighting': { label: '特殊照明', color: '#f97316', bg: 'bg-orange-50', text: 'text-orange-700' },
+}
+
+const roleConfig = {
+  Overall: {
+    label: '總表視角',
+    title: '整體部署效益',
+    description: '顯示 QUICKET 在多案場、多燈具類型、多區域的總節約效益與部署廣度。',
+    metrics: ['Total Lifecycle Savings', 'Energy Saved', 'CO₂ Reduced', 'Deployed Modules'],
+  },
+  Investor: {
+    label: '投資人',
+    title: '平台規模與市場擴張',
+    description: '聚焦部署數量、年度節約總額、應用類型覆蓋與跨區域擴張性。',
+    metrics: ['Total Lifecycle Savings', 'Active Regions', 'Covered Applications', 'Growth Pipeline'],
+  },
+  'Project Owner': {
+    label: '業主',
+    title: '營運成本與維護壓力下降',
+    description: '聚焦長期維護成本、能源費用、停工風險與可預期的設備更新節奏。',
+    metrics: ['Maintenance Cost Saved', 'Energy Saved', 'Service Events Reduced', 'Payback Signals'],
+  },
+  'Engineering Partner': {
+    label: '工程夥伴',
+    title: '規格複製與案型擴張',
+    description: '聚焦標準介面、可複製案型、維護流程簡化與標案效率。',
+    metrics: ['Standardized Types', 'Reusable Specs', 'Deployment Density', 'Maintenance Windows'],
+  },
+  'Lighting Manufacturer': {
+    label: '製造商',
+    title: '模組化產品線與授權機會',
+    description: '聚焦燈具類型分布、出貨量、可延伸產品族群與授權製造機會。',
+    metrics: ['Shipment Mix', 'Deployed Modules', 'Covered Applications', 'Product Family Potential'],
+  },
+  'ESG / Carbon Partner': {
+    label: 'ESG / 碳夥伴',
+    title: '可量化節碳資料基礎',
+    description: '聚焦可追蹤案場、節碳量、方法學樣本與碳資料封裝潛力。',
+    metrics: ['CO₂ Reduced', 'Traceable Sites', 'Carbon Data Packages', 'Methodology Candidates'],
+  },
+  'Distribution Partner': {
+    label: '通路夥伴',
+    title: '可複製銷售場景',
+    description: '聚焦高複製性燈型、區域需求、維護替換窗口與銷售路徑。',
+    metrics: ['Hot Applications', 'Regional Demand', 'Replacement Windows', 'Repeatable Sales'],
+  },
+}
+
+const projects = [
   {
-    id: 'TW-001',
-    projectName: '眾鈴汽車台中港新增組裝廠',
+    id: 'tw-zongling',
+    projectName: '眾鈴汽車｜台中港組裝廠',
     region: 'Taiwan',
-    city: 'Taichung',
+    area: 'East Asia',
+    lat: 24.28,
+    lon: 120.51,
     applicationType: 'Industrial Facility',
     luminaireType: 'Bay Light',
+    specification: '150W QUICKET module / 170 lm/W',
     quantity: 620,
     annualSaving: 1450000,
     energySaved: 93000,
-    carbonReduced: 73,
-    maintenanceSaving: 871875,
+    carbonReduced: 45.9,
+    maintenanceSaving: 5580000,
     status: 'Active',
     partnerRole: 'Project Owner',
-    coordinates: { x: 76, y: 50 },
   },
   {
-    id: 'TW-002',
-    projectName: '北部物流倉儲中心',
+    id: 'tw-shipyard',
+    projectName: '龍德造船｜新建廠區',
     region: 'Taiwan',
-    city: 'Taoyuan',
-    applicationType: 'Warehouse',
-    luminaireType: 'Bay Light',
-    quantity: 1200,
-    annualSaving: 2680000,
-    energySaved: 184000,
-    carbonReduced: 91,
-    maintenanceSaving: 1320000,
+    area: 'East Asia',
+    lat: 24.62,
+    lon: 121.84,
+    applicationType: 'Shipyard',
+    luminaireType: 'Flood Light',
+    specification: '120W / corrosion-resistant luminaire set',
+    quantity: 380,
+    annualSaving: 860000,
+    energySaved: 62000,
+    carbonReduced: 30.6,
+    maintenanceSaving: 2840000,
     status: 'Pilot',
     partnerRole: 'Engineering Partner',
-    coordinates: { x: 75, y: 48 },
   },
   {
-    id: 'JP-001',
-    projectName: '日本商辦更新示範案',
-    region: 'Japan',
-    city: 'Osaka',
-    applicationType: 'Commercial Office',
-    luminaireType: 'Downlight',
-    quantity: 800,
-    annualSaving: 760000,
-    energySaved: 42000,
-    carbonReduced: 21,
-    maintenanceSaving: 390000,
-    status: 'Planning',
-    partnerRole: 'Distribution Partner',
-    coordinates: { x: 78, y: 44 },
-  },
-  {
-    id: 'SG-001',
-    projectName: '東南亞港區投射燈方案',
-    region: 'Singapore',
-    city: 'Singapore',
-    applicationType: 'Port Infrastructure',
-    luminaireType: 'Flood Light',
-    quantity: 950,
-    annualSaving: 2140000,
-    energySaved: 125000,
-    carbonReduced: 62,
-    maintenanceSaving: 1040000,
-    status: 'Proposal',
-    partnerRole: 'Engineering Partner',
-    coordinates: { x: 70, y: 64 },
-  },
-  {
-    id: 'AE-001',
-    projectName: '中東園區路燈更新計畫',
-    region: 'Middle East',
-    city: 'Muscat',
+    id: 'tw-road',
+    projectName: '北部公共道路示範案',
+    region: 'Taiwan',
+    area: 'East Asia',
+    lat: 25.05,
+    lon: 121.56,
     applicationType: 'Public Infrastructure',
     luminaireType: 'Streetlight',
-    quantity: 2400,
-    annualSaving: 4860000,
-    energySaved: 310000,
-    carbonReduced: 153,
-    maintenanceSaving: 2280000,
-    status: 'Methodology',
-    partnerRole: 'ESG / Carbon Partner',
-    coordinates: { x: 58, y: 56 },
+    specification: '80W QUICKET streetlight module',
+    quantity: 1200,
+    annualSaving: 2360000,
+    energySaved: 210240,
+    carbonReduced: 103.9,
+    maintenanceSaving: 7280000,
+    status: 'Planning',
+    partnerRole: 'Distribution Partner',
   },
   {
-    id: 'EU-001',
-    projectName: '歐洲工業園區節碳組合',
-    region: 'Europe',
-    city: 'Rotterdam',
-    applicationType: 'Industrial Park',
+    id: 'jp-warehouse',
+    projectName: 'Kansai Logistics Warehouse',
+    region: 'Japan',
+    area: 'East Asia',
+    lat: 34.69,
+    lon: 135.5,
+    applicationType: 'Warehouse',
     luminaireType: 'Bay Light',
-    quantity: 1800,
-    annualSaving: 3920000,
-    energySaved: 260000,
-    carbonReduced: 128,
-    maintenanceSaving: 1760000,
+    specification: '100W / high-bay replacement package',
+    quantity: 960,
+    annualSaving: 3120000,
+    energySaved: 278000,
+    carbonReduced: 137.3,
+    maintenanceSaving: 9100000,
+    status: 'Partner Proposal',
+    partnerRole: 'Engineering Partner',
+  },
+  {
+    id: 'sg-office',
+    projectName: 'Singapore Office Retrofit Portfolio',
+    region: 'Singapore',
+    area: 'Southeast Asia',
+    lat: 1.35,
+    lon: 103.82,
+    applicationType: 'Commercial Office',
+    luminaireType: 'Downlight',
+    specification: '15W QUICKET downlight module',
+    quantity: 2400,
+    annualSaving: 1840000,
+    energySaved: 156000,
+    carbonReduced: 77.1,
+    maintenanceSaving: 6400000,
+    status: 'Simulated',
+    partnerRole: 'ESG / Carbon Partner',
+  },
+  {
+    id: 'vn-factory',
+    projectName: 'Vietnam Electronics Factory',
+    region: 'Vietnam',
+    area: 'Southeast Asia',
+    lat: 10.82,
+    lon: 106.63,
+    applicationType: 'Industrial Facility',
+    luminaireType: 'Bay Light',
+    specification: '150W industrial module set',
+    quantity: 1750,
+    annualSaving: 4360000,
+    energySaved: 356000,
+    carbonReduced: 175.9,
+    maintenanceSaving: 12800000,
     status: 'Planning',
     partnerRole: 'Lighting Manufacturer',
-    coordinates: { x: 47, y: 39 },
   },
   {
-    id: 'US-001',
-    projectName: '北美停車場與公共區域照明',
-    region: 'North America',
-    city: 'Seattle',
-    applicationType: 'Public Space',
+    id: 'om-port',
+    projectName: 'Oman Port Lighting Upgrade',
+    region: 'Oman',
+    area: 'Middle East',
+    lat: 23.59,
+    lon: 58.41,
+    applicationType: 'Port / Yard',
+    luminaireType: 'Flood Light',
+    specification: '150W / wide-area flood module',
+    quantity: 1420,
+    annualSaving: 5520000,
+    energySaved: 425000,
+    carbonReduced: 209.9,
+    maintenanceSaving: 15400000,
+    status: 'Carbon Methodology',
+    partnerRole: 'ESG / Carbon Partner',
+  },
+  {
+    id: 'ae-street',
+    projectName: 'UAE Smart Streetlight Cluster',
+    region: 'UAE',
+    area: 'Middle East',
+    lat: 25.2,
+    lon: 55.27,
+    applicationType: 'Smart City',
     luminaireType: 'Streetlight',
-    quantity: 1500,
-    annualSaving: 3010000,
-    energySaved: 198000,
-    carbonReduced: 98,
-    maintenanceSaving: 1410000,
+    specification: '70W / PoE-ready lighting node option',
+    quantity: 3200,
+    annualSaving: 8960000,
+    energySaved: 604800,
+    carbonReduced: 298.8,
+    maintenanceSaving: 23600000,
     status: 'Partner Proposal',
-    partnerRole: 'Distribution Partner',
-    coordinates: { x: 20, y: 39 },
+    partnerRole: 'Investor',
   },
   {
-    id: 'AU-001',
-    projectName: '澳洲特殊照明測試場域',
-    region: 'Australia',
-    city: 'Melbourne',
-    applicationType: 'Special Application',
+    id: 'de-heritage',
+    projectName: 'Germany Heritage Lighting Pilot',
+    region: 'Germany',
+    area: 'Europe',
+    lat: 52.52,
+    lon: 13.4,
+    applicationType: 'Architecture / Landmark',
     luminaireType: 'Special Lighting',
-    quantity: 320,
-    annualSaving: 920000,
-    energySaved: 51000,
-    carbonReduced: 25,
-    maintenanceSaving: 460000,
+    specification: 'custom color-temperature module package',
+    quantity: 220,
+    annualSaving: 410000,
+    energySaved: 28500,
+    carbonReduced: 14.1,
+    maintenanceSaving: 1350000,
     status: 'Pilot',
     partnerRole: 'Lighting Manufacturer',
-    coordinates: { x: 82, y: 78 },
+  },
+  {
+    id: 'us-campus',
+    projectName: 'US Campus Outdoor Retrofit',
+    region: 'United States',
+    area: 'North America',
+    lat: 37.77,
+    lon: -122.42,
+    applicationType: 'Campus / Outdoor',
+    luminaireType: 'Streetlight',
+    specification: '90W campus lighting module',
+    quantity: 780,
+    annualSaving: 2380000,
+    energySaved: 176000,
+    carbonReduced: 86.9,
+    maintenanceSaving: 4920000,
+    status: 'Simulated',
+    partnerRole: 'Project Owner',
   },
 ]
 
 const yearlyProjection = [
-  { year: 'Y1', savings: 19.7, energy: 1.26, carbon: 651 },
-  { year: 'Y2', savings: 39.4, energy: 2.53, carbon: 1302 },
-  { year: 'Y3', savings: 59.1, energy: 3.79, carbon: 1953 },
-  { year: 'Y4', savings: 78.8, energy: 5.05, carbon: 2604 },
-  { year: 'Y5', savings: 98.5, energy: 6.32, carbon: 3255 },
-  { year: 'Y6', savings: 118.2, energy: 7.58, carbon: 3906 },
-  { year: 'Y7', savings: 137.9, energy: 8.85, carbon: 4557 },
-  { year: 'Y8', savings: 157.6, energy: 10.11, carbon: 5208 },
+  { year: 'Y1', savings: 31, energy: 2.4, carbon: 1.2 },
+  { year: 'Y2', savings: 69, energy: 5.3, carbon: 2.7 },
+  { year: 'Y3', savings: 118, energy: 9.1, carbon: 4.5 },
+  { year: 'Y4', savings: 176, energy: 13.4, carbon: 6.6 },
+  { year: 'Y5', savings: 248, energy: 18.8, carbon: 9.3 },
 ]
 
-const applicationColors = {
-  'Bay Light': '#22d3ee',
-  Streetlight: '#38bdf8',
-  'Flood Light': '#818cf8',
-  Downlight: '#34d399',
-  'Special Lighting': '#fbbf24',
+function formatNTD(value) {
+  if (value >= 100000000) return `NTD ${(value / 100000000).toFixed(1)} 億`
+  if (value >= 1000000) return `NTD ${(value / 1000000).toFixed(1)}M`
+  return new Intl.NumberFormat('zh-TW', { style: 'currency', currency: 'TWD', maximumFractionDigits: 0 }).format(value)
 }
 
-const statusStyles = {
-  Active: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200',
-  Pilot: 'border-cyan-400/30 bg-cyan-400/10 text-cyan-200',
-  Planning: 'border-sky-400/30 bg-sky-400/10 text-sky-200',
-  Proposal: 'border-violet-400/30 bg-violet-400/10 text-violet-200',
-  Methodology: 'border-amber-400/30 bg-amber-400/10 text-amber-200',
-  'Partner Proposal': 'border-fuchsia-400/30 bg-fuchsia-400/10 text-fuchsia-200',
+function formatNumber(value, digits = 0) {
+  return new Intl.NumberFormat('zh-TW', { maximumFractionDigits: digits }).format(value)
 }
 
-const participantCards = [
-  {
-    role: 'Project Owner',
-    icon: Building2,
-    title: '降低長期營運成本',
-    description: '以模組化維護降低整燈更換、停工與高空作業壓力。',
-  },
-  {
-    role: 'Engineering Partner',
-    icon: Factory,
-    title: '提高設計與維護效率',
-    description: '透過統一介面縮短規格確認、標案設計與後續維護流程。',
-  },
-  {
-    role: 'Lighting Manufacturer',
-    icon: PackageCheck,
-    title: '建立可延伸產品線',
-    description: '讓燈具製造從單一規格競爭轉向模組介面與授權合作。',
-  },
-  {
-    role: 'ESG / Carbon Partner',
-    icon: Leaf,
-    title: '形成可量化節碳基礎',
-    description: '將能耗、維護與材料延壽轉為可追蹤的碳效益資料。',
-  },
-  {
-    role: 'Distribution Partner',
-    icon: Truck,
-    title: '擴大可複製銷售場景',
-    description: '以案例組合與效益數據降低客戶溝通成本。',
-  },
-]
+function formatKwh(value) {
+  if (value >= 1000000) return `${(value / 1000000).toFixed(2)}M kWh`
+  return `${formatNumber(value)} kWh`
+}
 
-const opportunityAlerts = [
-  {
-    level: 'High',
-    title: 'Bay Light deployments show fastest payback',
-    detail: '天井燈案場在工業場域具備高工時、高維護成本與高節電回收優勢。',
-  },
-  {
-    level: 'Medium',
-    title: 'Streetlight portfolio has carbon package potential',
-    detail: '路燈應用數量大、年度工時穩定，適合建立長期節碳資料封裝。',
-  },
-  {
-    level: 'Medium',
-    title: 'Maintenance window approaching in active sites',
-    detail: '部分案場進入傳統 LED 整燈替換期，可導入模組化維護比較。',
-  },
-  {
-    level: 'Strategic',
-    title: 'Partner roles can be mapped as deployment nodes',
-    detail: '案場、工程商、製造方與 ESG 夥伴可形成跨角色效益網絡。',
-  },
-]
+function totalBy(items, key) {
+  return items.reduce((sum, item) => sum + item[key], 0)
+}
 
-const formatNTD = (value) =>
-  new Intl.NumberFormat('zh-TW', {
-    style: 'currency',
-    currency: 'TWD',
-    maximumFractionDigits: 0,
-  }).format(value)
+function groupBy(items, key) {
+  return items.reduce((groups, item) => {
+    const groupKey = item[key]
+    if (!groups[groupKey]) groups[groupKey] = []
+    groups[groupKey].push(item)
+    return groups
+  }, {})
+}
 
-const formatNumber = (value, digits = 0) =>
-  new Intl.NumberFormat('zh-TW', {
-    maximumFractionDigits: digits,
-  }).format(value)
+function latLonToPoint(lat, lon, rotation, zoom) {
+  const rad = Math.PI / 180
+  const adjustedLon = lon + rotation.x
+  const adjustedLat = lat + rotation.y * 0.45
+  const phi = adjustedLat * rad
+  const lambda = adjustedLon * rad
+  const x = Math.cos(phi) * Math.sin(lambda)
+  const y = -Math.sin(phi)
+  const z = Math.cos(phi) * Math.cos(lambda)
+  const radius = 42 * zoom
+  return {
+    x: 50 + x * radius,
+    y: 50 + y * radius,
+    visible: z > -0.35,
+    depth: z,
+  }
+}
 
-function KpiCard({ icon: Icon, label, value, sublabel }) {
+function buildRegionClusters(items) {
+  return Object.entries(groupBy(items, 'region')).map(([region, regionItems]) => {
+    const lat = regionItems.reduce((sum, item) => sum + item.lat, 0) / regionItems.length
+    const lon = regionItems.reduce((sum, item) => sum + item.lon, 0) / regionItems.length
+    const typeSet = Array.from(new Set(regionItems.map((item) => item.luminaireType)))
+    return {
+      id: `cluster-${region}`,
+      region,
+      area: regionItems[0].area,
+      lat,
+      lon,
+      projects: regionItems.length,
+      quantity: totalBy(regionItems, 'quantity'),
+      annualSaving: totalBy(regionItems, 'annualSaving'),
+      energySaved: totalBy(regionItems, 'energySaved'),
+      carbonReduced: totalBy(regionItems, 'carbonReduced'),
+      types: typeSet,
+    }
+  })
+}
+
+function KpiCard({ icon: Icon, label, value, sub }) {
   return (
-    <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5 shadow-lg shadow-slate-950/30">
-      <div className="mb-5 flex items-start justify-between gap-3">
-        <div className="rounded-2xl bg-cyan-400/10 p-3 text-cyan-300">
-          <Icon size={22} />
+    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="rounded-2xl bg-slate-100 p-2 text-slate-700">
+          <Icon size={20} />
         </div>
-        <span className="text-[11px] uppercase tracking-[0.28em] text-slate-500">QUICKET</span>
+        <span className="text-[11px] uppercase tracking-[0.26em] text-slate-400">QUICKET</span>
       </div>
-      <p className="text-sm text-slate-400">{label}</p>
-      <div className="mt-2 text-2xl font-semibold tracking-tight text-white md:text-3xl">{value}</div>
-      <p className="mt-3 text-xs leading-5 text-slate-500">{sublabel}</p>
+      <div className="text-sm text-slate-500">{label}</div>
+      <div className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">{value}</div>
+      <div className="mt-2 text-xs leading-5 text-slate-500">{sub}</div>
     </div>
   )
 }
 
-function SectionTitle({ eyebrow, title, description }) {
+function MiniStat({ label, value }) {
   return (
-    <div className="mb-5">
-      <div className="text-xs font-medium uppercase tracking-[0.25em] text-cyan-300">{eyebrow}</div>
-      <h2 className="mt-2 text-xl font-semibold tracking-tight text-white">{title}</h2>
-      <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">{description}</p>
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+      <div className="text-xs text-slate-500">{label}</div>
+      <div className="mt-1 text-base font-semibold text-slate-950">{value}</div>
     </div>
   )
 }
 
-function DeploymentMap({ projects }) {
+function GlobePoint({ item, point, zoom, onHover, onLeave, onSelect, isCluster }) {
+  if (!point.visible) return null
+  const size = isCluster ? Math.min(28, 13 + item.projects * 2) : Math.max(9, 12 * zoom)
+  const color = isCluster ? '#22d3ee' : typeConfig[item.luminaireType]?.color || '#22d3ee'
   return (
-    <div className="relative min-h-[420px] overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 shadow-2xl shadow-slate-950/40">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(34,211,238,0.18),_rgba(15,23,42,0.08)_38%,_rgba(2,6,23,1)_72%)]" />
-      <div className="absolute left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-400/20 bg-slate-900/50 shadow-[0_0_90px_rgba(34,211,238,0.12)]" />
-      <div className="absolute left-1/2 top-1/2 h-[410px] w-[410px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-slate-700/70" />
-      <div className="absolute left-1/2 top-1/2 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-slate-700/50" />
-      <div className="absolute inset-x-10 top-1/2 border-t border-dashed border-cyan-400/15" />
-      <div className="absolute inset-y-8 left-1/2 border-l border-dashed border-cyan-400/15" />
+    <button
+      type="button"
+      aria-label={isCluster ? item.region : item.projectName}
+      onMouseEnter={(event) => onHover(event, item, isCluster)}
+      onMouseMove={(event) => onHover(event, item, isCluster)}
+      onMouseLeave={onLeave}
+      onClick={() => onSelect(item, isCluster)}
+      className="absolute z-20 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/70 shadow-glow transition-transform hover:scale-125"
+      style={{
+        left: `${point.x}%`,
+        top: `${point.y}%`,
+        width: `${size}px`,
+        height: `${size}px`,
+        backgroundColor: color,
+        opacity: Math.max(0.45, 0.7 + point.depth * 0.24),
+      }}
+    >
+      {isCluster && <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">{item.projects}</span>}
+    </button>
+  )
+}
 
-      {projects.map((project) => (
-        <div
-          key={project.id}
-          className="group absolute"
-          style={{
-            left: `${project.coordinates.x}%`,
-            top: `${project.coordinates.y}%`,
-          }}
-        >
-          <div
-            className="h-3 w-3 rounded-full ring-4 ring-slate-950 transition-transform group-hover:scale-125"
-            style={{ backgroundColor: applicationColors[project.luminaireType] }}
-          />
-          <div className="pointer-events-none absolute left-4 top-4 z-10 hidden w-64 rounded-2xl border border-slate-700 bg-slate-950/95 p-4 text-xs shadow-xl group-hover:block">
-            <div className="font-semibold text-white">{project.projectName}</div>
-            <div className="mt-2 text-slate-400">{project.region} · {project.luminaireType}</div>
-            <div className="mt-3 grid grid-cols-2 gap-2 text-slate-300">
-              <span>Modules</span><span className="text-right">{formatNumber(project.quantity)}</span>
-              <span>Annual Saving</span><span className="text-right">{formatNTD(project.annualSaving)}</span>
-              <span>CO₂</span><span className="text-right">{project.carbonReduced} t</span>
-            </div>
+function GlobeTooltip({ tooltip }) {
+  if (!tooltip) return null
+  const { item, x, y, isCluster } = tooltip
+  return (
+    <div
+      className="pointer-events-none fixed z-50 max-w-xs rounded-2xl border border-slate-700 bg-slate-950/95 p-4 text-white shadow-2xl"
+      style={{ left: x + 16, top: y + 16 }}
+    >
+      {isCluster ? (
+        <div>
+          <div className="text-xs uppercase tracking-[0.18em] text-cyan-300">Regional Aggregate</div>
+          <div className="mt-1 text-lg font-semibold">{item.region}</div>
+          <div className="mt-3 space-y-1 text-sm text-slate-300">
+            <div>部署規格：{item.types.join(' / ')}</div>
+            <div>總量：{formatNumber(item.quantity)} 套</div>
+            <div>年度節約：{formatNTD(item.annualSaving)}</div>
+            <div>年度節碳：{formatNumber(item.carbonReduced, 1)} t</div>
           </div>
         </div>
-      ))}
-
-      <div className="relative z-[1] flex h-full min-h-[420px] flex-col justify-between p-6">
-        <div className="flex flex-col justify-between gap-4 md:flex-row">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-200">
-              <Globe2 size={14} />
-              Deployment Network View
-            </div>
-            <h2 className="mt-4 text-2xl font-semibold tracking-tight text-white">全球部署節點示意</h2>
-            <p className="mt-2 max-w-lg text-sm leading-6 text-slate-400">
-              以地區、燈具類型與參與角色呈現 QUICKET 在不同應用架構中的部署廣度。
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-xs md:grid-cols-1">
-            {Object.entries(applicationColors).map(([name, color]) => (
-              <div key={name} className="flex items-center gap-2 rounded-full border border-slate-800 bg-slate-950/70 px-3 py-2 text-slate-300">
-                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
-                {name}
-              </div>
-            ))}
+      ) : (
+        <div>
+          <div className="text-xs uppercase tracking-[0.18em] text-cyan-300">Deployment Site</div>
+          <div className="mt-1 text-base font-semibold">{item.projectName}</div>
+          <div className="mt-3 space-y-1 text-sm text-slate-300">
+            <div>應用：{item.applicationType}</div>
+            <div>規格：{item.specification}</div>
+            <div>用量：{formatNumber(item.quantity)} 套</div>
+            <div>年度節電：{formatKwh(item.energySaved)}</div>
+            <div>年度節碳：{formatNumber(item.carbonReduced, 1)} t</div>
           </div>
         </div>
-
-        <div className="mt-8 grid gap-3 md:grid-cols-3">
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-            <div className="text-xs text-slate-500">Active / Pilot Sites</div>
-            <div className="mt-2 text-2xl font-semibold text-white">8</div>
-          </div>
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-            <div className="text-xs text-slate-500">Regions Covered</div>
-            <div className="mt-2 text-2xl font-semibold text-white">7</div>
-          </div>
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-            <div className="text-xs text-slate-500">Application Types</div>
-            <div className="mt-2 text-2xl font-semibold text-white">5</div>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   )
 }
 
 function App() {
-  const totals = useMemo(() => {
-    const annualSaving = projectData.reduce((sum, item) => sum + item.annualSaving, 0)
-    const energySaved = projectData.reduce((sum, item) => sum + item.energySaved, 0)
-    const carbonReduced = projectData.reduce((sum, item) => sum + item.carbonReduced, 0)
-    const maintenanceSaving = projectData.reduce((sum, item) => sum + item.maintenanceSaving, 0)
-    const modules = projectData.reduce((sum, item) => sum + item.quantity, 0)
-    const applications = new Set(projectData.map((item) => item.luminaireType)).size
+  const [viewMode, setViewMode] = useState('Overall')
+  const [metricMode, setMetricMode] = useState('Overall Impact')
+  const [selectedType, setSelectedType] = useState('All')
+  const [selectedRegion, setSelectedRegion] = useState('All')
+  const [selectedItem, setSelectedItem] = useState(null)
+  const [tooltip, setTooltip] = useState(null)
+  const [zoom, setZoom] = useState(1.05)
+  const [rotation, setRotation] = useState({ x: 228, y: -10 })
+  const [dragState, setDragState] = useState(null)
 
+  const filteredProjects = useMemo(() => {
+    return projects.filter((project) => {
+      const typeMatch = selectedType === 'All' || project.luminaireType === selectedType
+      const regionMatch = selectedRegion === 'All' || project.region === selectedRegion
+      return typeMatch && regionMatch
+    })
+  }, [selectedType, selectedRegion])
+
+  const totals = useMemo(() => {
     return {
-      annualSaving,
-      lifecycleSavings: annualSaving * 8,
-      energySaved,
-      carbonReduced,
-      maintenanceSaving,
-      modules,
-      applications,
+      lifecycle: totalBy(filteredProjects, 'annualSaving') * 6 + totalBy(filteredProjects, 'maintenanceSaving'),
+      annualSaving: totalBy(filteredProjects, 'annualSaving'),
+      energy: totalBy(filteredProjects, 'energySaved'),
+      carbon: totalBy(filteredProjects, 'carbonReduced'),
+      maintenance: totalBy(filteredProjects, 'maintenanceSaving'),
+      modules: totalBy(filteredProjects, 'quantity'),
+      applications: new Set(filteredProjects.map((item) => item.luminaireType)).size,
+      regions: new Set(filteredProjects.map((item) => item.region)).size,
+      projects: filteredProjects.length,
     }
-  }, [])
+  }, [filteredProjects])
+
+  const clusters = useMemo(() => buildRegionClusters(filteredProjects), [filteredProjects])
+  const globeItems = zoom < 1.35 ? clusters : filteredProjects
 
   const applicationMix = useMemo(() => {
-    const map = new Map()
-    projectData.forEach((item) => {
-      const existing = map.get(item.luminaireType) || { name: item.luminaireType, quantity: 0, annualSaving: 0 }
-      existing.quantity += item.quantity
-      existing.annualSaving += item.annualSaving
-      map.set(item.luminaireType, existing)
-    })
-    return Array.from(map.values())
-  }, [])
+    return Object.entries(groupBy(filteredProjects, 'luminaireType')).map(([type, items]) => ({
+      type,
+      label: typeConfig[type]?.label || type,
+      quantity: totalBy(items, 'quantity'),
+      annualSaving: totalBy(items, 'annualSaving'),
+      carbon: totalBy(items, 'carbonReduced'),
+      color: typeConfig[type]?.color || '#0891b2',
+    }))
+  }, [filteredProjects])
 
-  const participantMix = useMemo(() => {
-    const map = new Map()
-    projectData.forEach((item) => {
-      const existing = map.get(item.partnerRole) || { role: item.partnerRole, projects: 0, savings: 0 }
-      existing.projects += 1
-      existing.savings += item.annualSaving
-      map.set(item.partnerRole, existing)
+  const regionImpact = useMemo(() => {
+    return Object.entries(groupBy(filteredProjects, 'region')).map(([region, items]) => ({
+      region,
+      saving: Math.round(totalBy(items, 'annualSaving') / 1000000),
+      carbon: Math.round(totalBy(items, 'carbonReduced')),
+      modules: totalBy(items, 'quantity'),
+    }))
+  }, [filteredProjects])
+
+  const insight = roleConfig[viewMode]
+  const selectedSummary = selectedItem || {
+    region: selectedRegion === 'All' ? 'Global Portfolio' : selectedRegion,
+    annualSaving: totals.annualSaving,
+    energySaved: totals.energy,
+    carbonReduced: totals.carbon,
+    quantity: totals.modules,
+    projects: totals.projects,
+    types: applicationMix.map((item) => item.type),
+  }
+
+  const handlePointerDown = (event) => {
+    setDragState({ startX: event.clientX, startY: event.clientY, rotation })
+  }
+
+  const handlePointerMove = (event) => {
+    if (!dragState) return
+    setRotation({
+      x: dragState.rotation.x + (event.clientX - dragState.startX) * 0.45,
+      y: Math.max(-55, Math.min(55, dragState.rotation.y + (event.clientY - dragState.startY) * 0.28)),
     })
-    return Array.from(map.values())
-  }, [])
+  }
+
+  const handlePointerUp = () => setDragState(null)
+
+  const handleWheel = (event) => {
+    event.preventDefault()
+    const nextZoom = zoom + (event.deltaY < 0 ? 0.1 : -0.1)
+    setZoom(Math.max(0.75, Math.min(1.85, nextZoom)))
+  }
+
+  const handleHover = (event, item, isCluster) => {
+    setTooltip({ item, isCluster, x: event.clientX, y: event.clientY })
+  }
+
+  const handleSelect = (item, isCluster) => {
+    setSelectedItem(item)
+    if (isCluster) setSelectedRegion(item.region)
+  }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto max-w-[1500px] px-4 py-5 md:px-8">
-        <header className="relative overflow-hidden rounded-[2rem] border border-slate-800 bg-gradient-to-r from-slate-900 via-slate-900 to-cyan-950/70 p-6 shadow-2xl shadow-slate-950/50 md:p-8">
-          <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-cyan-400/10 blur-3xl" />
-          <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+    <div className="min-h-screen bg-slate-50 text-slate-950">
+      <GlobeTooltip tooltip={tooltip} />
+      <div className="mx-auto max-w-[1500px] px-4 py-5 sm:px-6 lg:px-8">
+        <header className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-soft">
+          <div className="grid gap-6 p-6 lg:grid-cols-[1.2fr_0.8fr] lg:p-8">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-cyan-200">
-                <Network size={14} />
-                Portfolio-level Impact Dashboard
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-700">
+                <Globe2 size={14} /> Modular Lighting Network
               </div>
-              <h1 className="mt-5 max-w-4xl text-3xl font-semibold tracking-tight text-white md:text-5xl">
+              <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">
                 QUICKET Global Impact Warroom
               </h1>
-              <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300 md:text-base">
-                以多案場、多燈具類型、多地區與多參與角色展示 QUICKET 的生命週期節約規模、應用廣度與平台型部署潛力。
+              <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
+                全球節約效益與應用部署總覽。地球儀展示 QUICKET 在不同地區、燈具類型與參與角色下累積出的生命週期節約規模；指標切換則讓不同參與者看到自己關心的總合表現。
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-3 md:w-[420px]">
-              <div className="rounded-3xl border border-slate-700 bg-slate-950/60 p-4">
-                <div className="text-xs text-slate-500">Mode</div>
-                <div className="mt-1 font-medium text-white">Demo Portfolio</div>
-              </div>
-              <div className="rounded-3xl border border-slate-700 bg-slate-950/60 p-4">
-                <div className="text-xs text-slate-500">Last Updated</div>
-                <div className="mt-1 font-medium text-white">Current Scenario</div>
-              </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2">
+              <MiniStat label="Project Nodes" value={formatNumber(totals.projects)} />
+              <MiniStat label="Active Regions" value={formatNumber(totals.regions)} />
+              <MiniStat label="Deployed Modules" value={formatNumber(totals.modules)} />
+              <MiniStat label="Covered Applications" value={formatNumber(totals.applications)} />
             </div>
           </div>
         </header>
 
         <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          <KpiCard icon={ArrowUpRight} label="Total Lifecycle Savings" value={formatNTD(totals.lifecycleSavings)} sublabel="8-year portfolio-level value" />
-          <KpiCard icon={Zap} label="Energy Saved" value={`${formatNumber(totals.energySaved)} kWh`} sublabel="Annual electricity reduction" />
-          <KpiCard icon={Leaf} label="CO₂ Reduced" value={`${formatNumber(totals.carbonReduced)} t`} sublabel="Annual carbon reduction" />
-          <KpiCard icon={ShieldCheck} label="Maintenance Cost Saved" value={formatNTD(totals.maintenanceSaving)} sublabel="Annual O&M saving base" />
-          <KpiCard icon={Lightbulb} label="Deployed Modules" value={formatNumber(totals.modules)} sublabel="Mock portfolio modules" />
-          <KpiCard icon={Activity} label="Covered Applications" value={`${totals.applications}`} sublabel="Luminaire architecture types" />
+          <KpiCard icon={CircleDollarSign} label="Total Lifecycle Savings" value={formatNTD(totals.lifecycle)} sub="年度節約與維護節約之總合展示" />
+          <KpiCard icon={Zap} label="Energy Saved" value={formatKwh(totals.energy)} sub="年度節電總量" />
+          <KpiCard icon={Trees} label="CO₂ Reduced" value={`${formatNumber(totals.carbon, 1)} t`} sub="年度可量化節碳量" />
+          <KpiCard icon={Factory} label="Maintenance Saved" value={formatNTD(totals.maintenance)} sub="整燈替換轉為模組替換" />
+          <KpiCard icon={Layers3} label="Deployed Modules" value={formatNumber(totals.modules)} sub="跨燈具類型的模組部署數" />
+          <KpiCard icon={Network} label="Application Coverage" value={`${formatNumber(totals.applications)} types`} sub="燈具類型與應用場域覆蓋" />
         </section>
 
-        <main className="mt-6 grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-          <section>
-            <DeploymentMap projects={projectData} />
-          </section>
+        <section className="mt-6 grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
+          <div className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-soft sm:p-6">
+            <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <h2 className="flex items-center gap-2 text-xl font-semibold text-slate-950">
+                  <Globe2 className="text-cyan-600" size={22} /> Interactive Deployment Globe
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">拖曳旋轉、滾輪縮放。放大看單一案場；縮小看地區聚合。</p>
+              </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <select value={selectedType} onChange={(event) => setSelectedType(event.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+                  <option value="All">All luminaire types</option>
+                  {Object.keys(typeConfig).map((type) => <option key={type} value={type}>{typeConfig[type].label} / {type}</option>)}
+                </select>
+                <select value={selectedRegion} onChange={(event) => setSelectedRegion(event.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+                  <option value="All">All regions</option>
+                  {Array.from(new Set(projects.map((project) => project.region))).map((region) => <option key={region} value={region}>{region}</option>)}
+                </select>
+                <select value={metricMode} onChange={(event) => setMetricMode(event.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+                  <option>Overall Impact</option>
+                  <option>Application Mix</option>
+                  <option>Energy Saving</option>
+                  <option>Carbon Reduction</option>
+                  <option>Maintenance Saving</option>
+                </select>
+              </div>
+            </div>
 
-          <section className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl shadow-slate-950/30">
-            <SectionTitle
-              eyebrow="Application Mix"
-              title="燈具類型與出貨組合"
-              description="依照出貨與案場應用類型，呈現 QUICKET 在不同照明架構中的延展性。"
-            />
-            <div className="h-72">
+            <div className="globe-grid relative overflow-hidden rounded-[1.75rem] border border-slate-200 bg-slate-950 p-4 text-white">
+              <div className="absolute left-4 top-4 z-30 flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs backdrop-blur">
+                <MousePointer2 size={14} /> Hover site points for details
+              </div>
+              <div className="absolute bottom-4 left-4 z-30 flex flex-wrap gap-2">
+                {Object.entries(typeConfig).map(([type, config]) => (
+                  <span key={type} className="rounded-full bg-white/10 px-3 py-1 text-xs text-slate-100">
+                    <span className="mr-2 inline-block h-2 w-2 rounded-full" style={{ backgroundColor: config.color }} />
+                    {config.label}
+                  </span>
+                ))}
+              </div>
+              <div className="absolute right-4 top-4 z-30 flex gap-2">
+                <button className="rounded-full bg-white/10 p-2 text-white hover:bg-white/20" type="button" onClick={() => setZoom((value) => Math.min(1.85, value + 0.12))}><ZoomIn size={16} /></button>
+                <button className="rounded-full bg-white/10 p-2 text-white hover:bg-white/20" type="button" onClick={() => setZoom((value) => Math.max(0.75, value - 0.12))}><ZoomOut size={16} /></button>
+              </div>
+              <div
+                className="relative mx-auto aspect-square w-full max-w-[620px] cursor-grab select-none rounded-full active:cursor-grabbing"
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={() => { handlePointerUp(); setTooltip(null) }}
+                onWheel={handleWheel}
+              >
+                <div className="globe-shell absolute inset-2 rounded-full border border-cyan-200/20 shadow-glow" />
+                {globeItems.map((item) => {
+                  const point = latLonToPoint(item.lat, item.lon, rotation, zoom)
+                  const isCluster = item.id.startsWith('cluster-')
+                  return (
+                    <GlobePoint
+                      key={item.id}
+                      item={item}
+                      point={point}
+                      zoom={zoom}
+                      isCluster={isCluster}
+                      onHover={handleHover}
+                      onLeave={() => setTooltip(null)}
+                      onSelect={handleSelect}
+                    />
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+
+          <aside className="space-y-6">
+            <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-soft">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-950">Dynamic Insight Panel</h2>
+                  <p className="mt-1 text-sm text-slate-500">選擇角色視角與地球儀節點後，查看總合表現。</p>
+                </div>
+                <Activity className="text-cyan-600" />
+              </div>
+              <select value={viewMode} onChange={(event) => setViewMode(event.target.value)} className="mt-4 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+                {Object.entries(roleConfig).map(([role, config]) => <option key={role} value={role}>{config.label} / {role}</option>)}
+              </select>
+              <div className="mt-5 rounded-3xl bg-slate-950 p-5 text-white">
+                <div className="text-xs uppercase tracking-[0.2em] text-cyan-300">{insight.label}</div>
+                <h3 className="mt-2 text-xl font-semibold">{insight.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-300">{insight.description}</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {insight.metrics.map((metric) => <span key={metric} className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs text-slate-200">{metric}</span>)}
+                </div>
+              </div>
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <MiniStat label="Current Scope" value={selectedSummary.region || selectedSummary.projectName} />
+                <MiniStat label="Modules" value={formatNumber(selectedSummary.quantity)} />
+                <MiniStat label="Annual Saving" value={formatNTD(selectedSummary.annualSaving)} />
+                <MiniStat label="CO₂ Reduced" value={`${formatNumber(selectedSummary.carbonReduced, 1)} t`} />
+              </div>
+            </div>
+
+            <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-soft">
+              <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-950"><Sparkles size={19} className="text-cyan-600" />Aggregated Signals</h2>
+              <div className="mt-4 space-y-3 text-sm text-slate-600">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">Bay Light deployments show the strongest industrial payback signals.</div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">Streetlight clusters create high-density maintenance replacement windows.</div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">Selected sites are suitable for carbon data package preparation.</div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">Regional clustering indicates a reusable application specification layer.</div>
+              </div>
+            </div>
+          </aside>
+        </section>
+
+        <section className="mt-6 grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
+          <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-soft">
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-950"><BarChart3 className="text-cyan-600" size={20} />Application Mix</h2>
+            <p className="mt-1 text-sm text-slate-500">依燈具類型顯示部署量與應用廣度。</p>
+            <div className="mt-4 h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={applicationMix} dataKey="quantity" nameKey="name" innerRadius={65} outerRadius={105} paddingAngle={3}>
-                    {applicationMix.map((entry) => (
-                      <Cell key={entry.name} fill={applicationColors[entry.name]} />
-                    ))}
+                  <Pie data={applicationMix} dataKey="quantity" nameKey="label" innerRadius={62} outerRadius={96} paddingAngle={3}>
+                    {applicationMix.map((entry) => <Cell key={entry.type} fill={entry.color} />)}
                   </Pie>
-                  <Tooltip
-                    formatter={(value, name) => [formatNumber(value), name]}
-                    contentStyle={{ background: '#020617', border: '1px solid #334155', borderRadius: 14 }}
-                  />
-                  <Legend />
+                  <Tooltip formatter={(value) => `${formatNumber(value)} modules`} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div className="mt-5 space-y-3">
+            <div className="mt-4 grid gap-2">
               {applicationMix.map((item) => (
-                <div key={item.name} className="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-950/60 px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <span className="h-3 w-3 rounded-full" style={{ backgroundColor: applicationColors[item.name] }} />
-                    <span className="text-sm text-slate-300">{item.name}</span>
-                  </div>
-                  <span className="text-sm font-medium text-white">{formatNumber(item.quantity)} pcs</span>
-                </div>
-              ))}
-            </div>
-          </section>
-        </main>
-
-        <section className="mt-6 grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-          <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl shadow-slate-950/30">
-            <SectionTitle eyebrow="Trend Projection" title="累積效益趨勢" description="以示範案場組合估算多年度累積節約、節電與節碳趨勢。" />
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={yearlyProjection}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis dataKey="year" stroke="#94a3b8" />
-                  <YAxis stroke="#94a3b8" />
-                  <Tooltip contentStyle={{ background: '#020617', border: '1px solid #334155', borderRadius: 14 }} />
-                  <Legend />
-                  <Area type="monotone" dataKey="savings" name="Lifecycle Savings (NTD M)" stroke="#22d3ee" fill="#22d3ee" fillOpacity={0.16} />
-                  <Area type="monotone" dataKey="energy" name="Energy Saved (M kWh)" stroke="#34d399" fill="#34d399" fillOpacity={0.12} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl shadow-slate-950/30">
-            <SectionTitle eyebrow="Participant Network" title="參與者價值分布" description="同一套部署資料可以對應不同參與者的商業利益，形成平台式合作網絡。" />
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={participantMix} layout="vertical" margin={{ left: 40, right: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis type="number" stroke="#94a3b8" tickFormatter={(value) => `${Math.round(value / 1000000)}M`} />
-                  <YAxis type="category" dataKey="role" width={120} stroke="#94a3b8" />
-                  <Tooltip formatter={(value) => formatNTD(value)} contentStyle={{ background: '#020617', border: '1px solid #334155', borderRadius: 14 }} />
-                  <Bar dataKey="savings" name="Annual Saving" fill="#38bdf8" radius={[0, 8, 8, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </section>
-
-        <section className="mt-6 rounded-3xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl shadow-slate-950/30">
-          <SectionTitle eyebrow="Project Performance" title="案場績效清單" description="以 mock portfolio data 展示不同區域、應用類型、合作角色與部署狀態。" />
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[980px] border-separate border-spacing-y-2 text-left text-sm">
-              <thead>
-                <tr className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                  <th className="px-4 py-2">Project</th>
-                  <th className="px-4 py-2">Region</th>
-                  <th className="px-4 py-2">Luminaire</th>
-                  <th className="px-4 py-2 text-right">Modules</th>
-                  <th className="px-4 py-2 text-right">Annual Saving</th>
-                  <th className="px-4 py-2 text-right">CO₂</th>
-                  <th className="px-4 py-2">Partner</th>
-                  <th className="px-4 py-2">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {projectData.map((project) => (
-                  <tr key={project.id} className="rounded-2xl bg-slate-950/60 text-slate-300">
-                    <td className="rounded-l-2xl px-4 py-4">
-                      <div className="font-medium text-white">{project.projectName}</div>
-                      <div className="mt-1 text-xs text-slate-500">{project.applicationType}</div>
-                    </td>
-                    <td className="px-4 py-4">{project.region}</td>
-                    <td className="px-4 py-4">
-                      <span className="inline-flex items-center gap-2">
-                        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: applicationColors[project.luminaireType] }} />
-                        {project.luminaireType}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-right">{formatNumber(project.quantity)}</td>
-                    <td className="px-4 py-4 text-right text-cyan-200">{formatNTD(project.annualSaving)}</td>
-                    <td className="px-4 py-4 text-right">{project.carbonReduced} t</td>
-                    <td className="px-4 py-4">{project.partnerRole}</td>
-                    <td className="rounded-r-2xl px-4 py-4">
-                      <span className={`inline-flex rounded-full border px-3 py-1 text-xs ${statusStyles[project.status] || 'border-slate-700 bg-slate-800 text-slate-300'}`}>
-                        {project.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <section className="mt-6 grid gap-6 xl:grid-cols-[1fr_0.8fr]">
-          <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl shadow-slate-950/30">
-            <SectionTitle eyebrow="Participant Value" title="合作角色價值" description="讓不同參與者看見自己在 QUICKET 生態中的得利方式。" />
-            <div className="grid gap-4 md:grid-cols-2">
-              {participantCards.map((card) => {
-                const Icon = card.icon
-                return (
-                  <div key={card.role} className="rounded-3xl border border-slate-800 bg-slate-950/60 p-5">
-                    <div className="mb-4 flex items-center gap-3">
-                      <div className="rounded-2xl bg-cyan-400/10 p-3 text-cyan-300">
-                        <Icon size={20} />
-                      </div>
-                      <div>
-                        <div className="text-sm font-semibold text-white">{card.role}</div>
-                        <div className="text-xs text-slate-500">{card.title}</div>
-                      </div>
-                    </div>
-                    <p className="text-sm leading-6 text-slate-400">{card.description}</p>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl shadow-slate-950/30">
-            <SectionTitle eyebrow="Opportunity / Alerts" title="機會提醒" description="以戰情室邏輯呈現可追蹤的擴張、維護與碳封裝機會。" />
-            <div className="space-y-4">
-              {opportunityAlerts.map((item) => (
-                <div key={item.title} className="rounded-3xl border border-slate-800 bg-slate-950/60 p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="rounded-2xl bg-amber-400/10 p-2 text-amber-300">
-                      <AlertTriangle size={18} />
-                    </div>
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full border border-slate-700 px-2.5 py-1 text-[11px] uppercase tracking-[0.16em] text-slate-400">{item.level}</span>
-                        <h3 className="font-medium text-white">{item.title}</h3>
-                      </div>
-                      <p className="mt-2 text-sm leading-6 text-slate-400">{item.detail}</p>
-                    </div>
-                  </div>
+                <div key={item.type} className="flex items-center justify-between rounded-2xl border border-slate-200 p-3 text-sm">
+                  <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />{item.label}</span>
+                  <span className="font-semibold text-slate-950">{formatNumber(item.quantity)}</span>
                 </div>
               ))}
             </div>
           </div>
-        </section>
 
-        <footer className="mt-8 rounded-3xl border border-slate-800 bg-slate-900/60 p-5 text-sm leading-6 text-slate-400">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <span className="font-medium text-slate-200">Strategic note:</span> This page presents QUICKET as a portfolio-level deployment network. It is designed to show lifecycle savings, application breadth, and participant value before moving into deeper data verification or platform integration.
-            </div>
-            <div className="flex items-center gap-2 text-cyan-300">
-              <MapPin size={16} />
-              Demo data only
+          <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-soft">
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-950"><MapPin className="text-cyan-600" size={20} />Regional Aggregated Performance</h2>
+            <p className="mt-1 text-sm text-slate-500">不列出完整案場表，而以區域總合呈現部署規模、節約與節碳。</p>
+            <div className="mt-5 grid gap-5 lg:grid-cols-2">
+              <div className="h-72 rounded-3xl border border-slate-200 p-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={regionImpact}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis dataKey="region" stroke="#64748b" tick={{ fontSize: 11 }} />
+                    <YAxis stroke="#64748b" tick={{ fontSize: 11 }} />
+                    <Tooltip formatter={(value, name) => [name === 'saving' ? `NTD ${value}M` : value, name]} />
+                    <Bar dataKey="saving" fill="#0891b2" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="h-72 rounded-3xl border border-slate-200 p-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={yearlyProjection}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis dataKey="year" stroke="#64748b" />
+                    <YAxis stroke="#64748b" />
+                    <Tooltip />
+                    <Area dataKey="savings" name="Savings NTD M" type="monotone" stroke="#0891b2" fill="#cffafe" />
+                    <Area dataKey="carbon" name="CO₂ kt" type="monotone" stroke="#16a34a" fill="#dcfce7" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
-        </footer>
+        </section>
+
+        <section className="mt-6 rounded-[2rem] border border-slate-200 bg-white p-5 shadow-soft">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-950"><ShieldCheck className="text-cyan-600" size={20} />Data Structure Layer</h2>
+          <p className="mt-2 max-w-4xl text-sm leading-7 text-slate-600">
+            本頁表面呈現 QUICKET 部署與節約效益，底層資料則依 Region、Application Type、Luminaire Type、Specification、Quantity、Saving Event、Maintenance Event、Partner Role 與 Status 聚合。這讓 QUICKET 的部署資料可被分類、查詢、聚合與封裝，而不需要在頁面上直接展示完整案場清單。
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {['Region', 'Site', 'Luminaire Type', 'Application Type', 'Specification', 'Quantity', 'Saving Event', 'Maintenance Event', 'Partner Role', 'Status'].map((tag) => (
+              <span key={tag} className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-600">{tag}</span>
+            ))}
+          </div>
+        </section>
       </div>
     </div>
   )
