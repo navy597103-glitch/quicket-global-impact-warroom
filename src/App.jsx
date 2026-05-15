@@ -1,697 +1,102 @@
 
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useMemo, useState } from 'react'
+import { Search, Maximize2, Bell, UserRound, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react'
+import { Area, AreaChart, CartesianGrid, Line, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell } from 'recharts'
 
-const luminaireLabels = {
-  all: '全部',
-  bay: '天井燈',
-  street: '路燈',
-  flood: '投射燈',
-  down: '崁燈',
-  special: '特殊照明',
+const productTypes = {
+  all: { label: '全部機種', shortLabel: '全部', modules: 186534, annualSaving: 128700000, annualCarbon: 6842, deploymentAge: 1247 },
+  downlight: { label: '崁燈', shortLabel: '崁燈', modules: 42000, annualSaving: 23600000, annualCarbon: 1240, deploymentAge: 986 },
+  bayLight: { label: '天井燈', shortLabel: '天井燈', modules: 72000, annualSaving: 51200000, annualCarbon: 2380, deploymentAge: 1247 },
+  floodLight: { label: '投射燈', shortLabel: '投射燈', modules: 34800, annualSaving: 28900000, annualCarbon: 1490, deploymentAge: 842 },
+  streetlight: { label: '路燈', shortLabel: '路燈', modules: 37734, annualSaving: 25000000, annualCarbon: 1732, deploymentAge: 1108 },
 }
-
-const metricLabels = {
-  modules: '部署量',
-  saving: '節約金額',
-  energy: '節電量',
-  carbon: '節碳量',
-  maintenance: '維護節約',
-}
-
-const levelLabels = {
-  global: '全球',
-  country: '國家',
-  district: '區域',
-  site: '案場',
-}
-
-
-const colorMap = {
-  bay: '#0ea5e9',
-  street: '#2563eb',
-  flood: '#16a34a',
-  down: '#7c3aed',
-  special: '#f97316',
-}
-
-const deployments = [
-  {
-    id: 'tw-taichung-bay',
-    type: 'site',
-    name: '眾鈴汽車｜台中港組裝廠',
-    region: 'Asia',
-    country: 'Taiwan',
-    district: 'Taichung Port',
-    luminaire: 'bay',
-    application: '工廠天井燈',
-    spec: '150W QUICKET 模組',
-    modules: 620,
-    annualSaving: 1450000,
-    lifecycleSaving: 8651790,
-    energySaved: 93000,
-    carbonReduced: 45.9,
-    maintenanceSaved: 5580000,
-    status: 'Active',
-    x: 57,
-    y: 50,
-  },
-  {
-    id: 'tw-north-down',
-    type: 'site',
-    name: '北部商辦更新案',
-    region: 'Asia',
-    country: 'Taiwan',
-    district: 'Taipei',
-    luminaire: 'down',
-    application: '商辦崁燈',
-    spec: '15W QUICKET 模組',
-    modules: 880,
-    annualSaving: 980000,
-    lifecycleSaving: 5600000,
-    energySaved: 72000,
-    carbonReduced: 35.6,
-    maintenanceSaved: 3200000,
-    status: 'Planning',
-    x: 55,
-    y: 43,
-  },
-  {
-    id: 'sg-bay',
-    type: 'site',
-    name: 'Singapore Logistics Hub',
-    region: 'Asia',
-    country: 'Singapore',
-    district: 'Jurong',
-    luminaire: 'bay',
-    application: '倉儲照明',
-    spec: '120W QUICKET 模組',
-    modules: 1100,
-    annualSaving: 2100000,
-    lifecycleSaving: 11900000,
-    energySaved: 152000,
-    carbonReduced: 75.1,
-    maintenanceSaved: 6900000,
-    status: 'Pilot',
-    x: 52,
-    y: 58,
-  },
-  {
-    id: 'jp-street',
-    type: 'site',
-    name: 'Japan Streetlight Cluster',
-    region: 'Asia',
-    country: 'Japan',
-    district: 'Kansai',
-    luminaire: 'street',
-    application: '公共路燈',
-    spec: '80W QUICKET 模組',
-    modules: 1600,
-    annualSaving: 3300000,
-    lifecycleSaving: 18400000,
-    energySaved: 210000,
-    carbonReduced: 103.7,
-    maintenanceSaved: 9800000,
-    status: 'Proposal',
-    x: 63,
-    y: 40,
-  },
-  {
-    id: 'om-flood',
-    type: 'site',
-    name: 'Oman Port Floodlight Field',
-    region: 'Middle East',
-    country: 'Oman',
-    district: 'Sohar',
-    luminaire: 'flood',
-    application: '港區投射燈',
-    spec: '150W QUICKET 模組',
-    modules: 1800,
-    annualSaving: 4200000,
-    lifecycleSaving: 23600000,
-    energySaved: 286000,
-    carbonReduced: 141.3,
-    maintenanceSaved: 12200000,
-    status: 'Planning',
-    x: 42,
-    y: 55,
-  },
-  {
-    id: 'ae-street',
-    type: 'site',
-    name: 'UAE Smart Streetlight Pilot',
-    region: 'Middle East',
-    country: 'UAE',
-    district: 'Abu Dhabi',
-    luminaire: 'street',
-    application: '智慧路燈',
-    spec: '90W QUICKET 模組',
-    modules: 2250,
-    annualSaving: 5100000,
-    lifecycleSaving: 31000000,
-    energySaved: 351000,
-    carbonReduced: 173.4,
-    maintenanceSaved: 17800000,
-    status: 'Pilot',
-    x: 46,
-    y: 53,
-  },
-  {
-    id: 'de-special',
-    type: 'site',
-    name: 'Germany Industrial Safety Lighting',
-    region: 'Europe',
-    country: 'Germany',
-    district: 'Ruhr',
-    luminaire: 'special',
-    application: '特殊工業照明',
-    spec: '70W QUICKET 模組',
-    modules: 360,
-    annualSaving: 820000,
-    lifecycleSaving: 4800000,
-    energySaved: 46000,
-    carbonReduced: 22.7,
-    maintenanceSaved: 2600000,
-    status: 'Proposal',
-    x: 37,
-    y: 36,
-  },
-  {
-    id: 'us-warehouse',
-    type: 'site',
-    name: 'US Warehouse Retrofit',
-    region: 'North America',
-    country: 'United States',
-    district: 'Texas',
-    luminaire: 'bay',
-    application: '倉儲天井燈',
-    spec: '140W QUICKET 模組',
-    modules: 1400,
-    annualSaving: 2700000,
-    lifecycleSaving: 15600000,
-    energySaved: 188000,
-    carbonReduced: 92.9,
-    maintenanceSaved: 8400000,
-    status: 'Partner Proposal',
-    x: 24,
-    y: 46,
-  },
-  {
-    id: 'au-down',
-    type: 'site',
-    name: 'Australia Retail Downlight Network',
-    region: 'Oceania',
-    country: 'Australia',
-    district: 'Sydney',
-    luminaire: 'down',
-    application: '零售崁燈',
-    spec: '18W QUICKET 模組',
-    modules: 900,
-    annualSaving: 760000,
-    lifecycleSaving: 4200000,
-    energySaved: 56000,
-    carbonReduced: 27.7,
-    maintenanceSaved: 2500000,
-    status: 'Simulated',
-    x: 61,
-    y: 71,
-  },
-  {
-    id: 'id-flood',
-    type: 'site',
-    name: 'Indonesia Outdoor Facility',
-    region: 'Southeast Asia',
-    country: 'Indonesia',
-    district: 'Jakarta',
-    luminaire: 'flood',
-    application: '戶外場域',
-    spec: '100W QUICKET 模組',
-    modules: 1200,
-    annualSaving: 2100000,
-    lifecycleSaving: 12600000,
-    energySaved: 148000,
-    carbonReduced: 73.1,
-    maintenanceSaved: 7200000,
-    status: 'Planning',
-    x: 55,
-    y: 63,
-  },
+const productOptions = Object.entries(productTypes).map(([value, item]) => ({ value, label: item.label }))
+const mapRegions = [
+  { name: '北美洲', modules: 1256, x: 16, y: 43, color: '#22c55e' },
+  { name: '中南美洲', modules: 762, x: 24, y: 66, color: '#facc15' },
+  { name: '歐洲', modules: 2134, x: 52, y: 34, color: '#f97316' },
+  { name: '非洲', modules: 1089, x: 50, y: 57, color: '#f59e0b' },
+  { name: '中東', modules: 4215, x: 64, y: 48, color: '#ef4444' },
+  { name: '亞洲', modules: 6842, x: 82, y: 43, color: '#ef4444' },
+  { name: '大洋洲', modules: 512, x: 89, y: 75, color: '#22c55e' },
 ]
+const deploymentPoints = [
+  { x: 12, y: 40, level: '50 - 100', color: '#22c55e' }, { x: 18, y: 46, level: '< 50', color: '#0ea5e9' },
+  { x: 23, y: 54, level: '100 - 500', color: '#facc15' }, { x: 29, y: 68, level: '500 - 1,000', color: '#f97316' },
+  { x: 36, y: 31, level: '< 50', color: '#0ea5e9' }, { x: 43, y: 36, level: '100 - 500', color: '#facc15' },
+  { x: 49, y: 41, level: '500 - 1,000', color: '#f97316' }, { x: 57, y: 46, level: '> 1,000', color: '#ef4444' },
+  { x: 61, y: 58, level: '100 - 500', color: '#facc15' }, { x: 68, y: 50, level: '500 - 1,000', color: '#f97316' },
+  { x: 73, y: 53, level: '50 - 100', color: '#22c55e' }, { x: 78, y: 47, level: '100 - 500', color: '#facc15' },
+  { x: 83, y: 42, level: '> 1,000', color: '#ef4444' }, { x: 87, y: 54, level: '< 50', color: '#0ea5e9' },
+  { x: 87, y: 79, level: '50 - 100', color: '#22c55e' },
+]
+const trendData = [
+  { month: '1月', saving: 38, carbon: 1.8 }, { month: '2月', saving: 59, carbon: 2.9 },
+  { month: '3月', saving: 74, carbon: 3.6 }, { month: '4月', saving: 88, carbon: 4.3 },
+  { month: '5月', saving: 96, carbon: 4.9 }, { month: '6月', saving: 101, carbon: 5.2 },
+  { month: '7月', saving: 106, carbon: 5.4 }, { month: '8月', saving: 116, carbon: 5.8 },
+  { month: '9月', saving: 126, carbon: 6.1 }, { month: '10月', saving: 132, carbon: 6.4 },
+  { month: '11月', saving: 138, carbon: 6.6 }, { month: '12月', saving: 145, carbon: 6.9 },
+]
+const distributionBase = [
+  { name: '天井燈', value: 38.7, color: '#0ea5e9' }, { name: '路燈', value: 25.4, color: '#22c55e' },
+  { name: '投射燈', value: 18.6, color: '#f59e0b' }, { name: '崁燈', value: 9.8, color: '#7c3aed' },
+  { name: '其他', value: 7.5, color: '#475569' },
+]
+function formatNumber(value) { return Number(value).toLocaleString('zh-TW') }
+function formatNTD(value) { if (value >= 100000000) return `${(value / 100000000).toFixed(1)} 億`; if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`; return formatNumber(value) }
 
-const regionPositions = {
-  Asia: { x: 58, y: 48 },
-  'Middle East': { x: 44, y: 54 },
-  Europe: { x: 37, y: 36 },
-  'North America': { x: 24, y: 46 },
-  Oceania: { x: 61, y: 71 },
-  'Southeast Asia': { x: 55, y: 61 },
-}
-
-const countryPositions = {
-  Taiwan: { x: 56, y: 46 },
-  Singapore: { x: 52, y: 58 },
-  Japan: { x: 63, y: 40 },
-  Oman: { x: 42, y: 55 },
-  UAE: { x: 46, y: 53 },
-  Germany: { x: 37, y: 36 },
-  'United States': { x: 24, y: 46 },
-  Australia: { x: 61, y: 71 },
-  Indonesia: { x: 55, y: 63 },
-}
-
-
-function numberFormat(value) {
-  return new Intl.NumberFormat('zh-TW').format(Math.round(value))
-}
-
-function compactMoney(value) {
-  if (value >= 100000000) return `NTD ${(value / 100000000).toFixed(1)} 億`
-  if (value >= 1000000) return `NTD ${(value / 1000000).toFixed(1)}M`
-  return `NTD ${numberFormat(value)}`
-}
-
-function sum(items, key) {
-  return items.reduce((total, item) => total + item[key], 0)
-}
-
-function unique(items, key) {
-  return Array.from(new Set(items.map((item) => item[key])))
-}
-
-function getFilteredSites(sites, luminaire) {
-  return sites.filter((site) => luminaire === 'all' || site.luminaire === luminaire)
-}
-
-function groupBy(items, key) {
-  return items.reduce((groups, item) => {
-    const value = item[key]
-    if (!groups[value]) groups[value] = []
-    groups[value].push(item)
-    return groups
-  }, {})
-}
-
-function aggregatePoint(label, groupType, items, position) {
-  const luminaireTypes = unique(items, 'luminaire')
-  return {
-    id: `${groupType}-${label}`,
-    type: 'cluster',
-    groupType,
-    label,
-    name: label,
-    x: position?.x ?? 50,
-    y: position?.y ?? 50,
-    modules: sum(items, 'modules'),
-    annualSaving: sum(items, 'annualSaving'),
-    lifecycleSaving: sum(items, 'lifecycleSaving'),
-    energySaved: sum(items, 'energySaved'),
-    carbonReduced: sum(items, 'carbonReduced'),
-    maintenanceSaved: sum(items, 'maintenanceSaved'),
-    luminaireTypes,
-    applications: unique(items, 'application'),
-    sites: items.length,
-    countries: unique(items, 'country'),
-  }
-}
-
-function buildGlobePoints(sites, level, zoom) {
-  if (level === 'site' || zoom > 1.65) {
-    return sites
-  }
-
-  if (level === 'district' || zoom > 1.25) {
-    const grouped = groupBy(sites, 'country')
-    return Object.entries(grouped).map(([country, items]) => (
-      aggregatePoint(country, 'country', items, countryPositions[country])
-    ))
-  }
-
-  if (level === 'country' || zoom > 0.95) {
-    const grouped = groupBy(sites, 'country')
-    return Object.entries(grouped).map(([country, items]) => (
-      aggregatePoint(country, 'country', items, countryPositions[country])
-    ))
-  }
-
-  const grouped = groupBy(sites, 'region')
-  return Object.entries(grouped).map(([region, items]) => (
-    aggregatePoint(region, 'region', items, regionPositions[region])
-  ))
-}
-
-function statusLabel(status) {
-  const map = {
-    Active: 'Active',
-    Pilot: 'Pilot',
-    Planning: 'Planning',
-    Proposal: 'Proposal',
-    Simulated: 'Simulated',
-    'Partner Proposal': 'Partner Proposal',
-  }
-  return map[status] || status
-}
-
-function computeSummary(items) {
-  return {
-    modules: sum(items, 'modules'),
-    annualSaving: sum(items, 'annualSaving'),
-    lifecycleSaving: sum(items, 'lifecycleSaving'),
-    energySaved: sum(items, 'energySaved'),
-    carbonReduced: sum(items, 'carbonReduced'),
-    maintenanceSaved: sum(items, 'maintenanceSaved'),
-    applications: unique(items, 'application').length,
-    regions: unique(items, 'region').length,
-    countries: unique(items, 'country').length,
-    sites: items.length,
-  }
-}
-
-function buildSelectionSummary(selected, filteredSites) {
-  if (!selected) {
-    return {
-      title: 'Global Portfolio',
-      label: 'GLOBAL VIEW',
-      description: '顯示 QUICKET 在多案場、多燈具類型與多地區下的總節約效益與部署密度。',
-      summary: computeSummary(filteredSites),
-      chips: ['Global', 'Portfolio', 'Aggregated'],
-    }
-  }
-
-  if (selected.type === 'cluster') {
-    const summary = {
-      modules: selected.modules,
-      annualSaving: selected.annualSaving,
-      lifecycleSaving: selected.lifecycleSaving,
-      energySaved: selected.energySaved,
-      carbonReduced: selected.carbonReduced,
-      maintenanceSaved: selected.maintenanceSaved,
-      applications: selected.applications.length,
-      regions: selected.groupType === 'region' ? 1 : undefined,
-      countries: selected.countries.length,
-      sites: selected.sites,
-    }
-    return {
-      title: `${selected.label} Deployment Cluster`,
-      label: selected.groupType === 'region' ? 'REGION CLUSTER' : 'COUNTRY CLUSTER',
-      description: `聚合 ${selected.sites} 個部署節點，涵蓋 ${selected.luminaireTypes.map((type) => luminaireLabels[type]).join('、')}。`,
-      summary,
-      chips: selected.applications.slice(0, 4),
-    }
-  }
-
-  return {
-    title: selected.name,
-    label: 'SITE NODE',
-    description: `${selected.country}｜${selected.district}｜${selected.application}｜${selected.spec}`,
-    summary: {
-      modules: selected.modules,
-      annualSaving: selected.annualSaving,
-      lifecycleSaving: selected.lifecycleSaving,
-      energySaved: selected.energySaved,
-      carbonReduced: selected.carbonReduced,
-      maintenanceSaved: selected.maintenanceSaved,
-      applications: 1,
-      regions: 1,
-      countries: 1,
-      sites: 1,
-    },
-    chips: [luminaireLabels[selected.luminaire], selected.status, selected.application],
-  }
-}
-
-
-function buildPanelInterpretation(selectionSummary, metric) {
-  const metricLabel = metricLabels[metric]
-  const title = selectionSummary.title
-  const summary = selectionSummary.summary
-
-  if (selectionSummary.label === 'SITE NODE') {
-    return `${title} 目前以單一案場節點呈現。此視角聚焦於 ${metricLabel}，可直接查看該案場的用量、年度節約、節電與節碳成果。`
-  }
-
-  if (selectionSummary.label === 'REGION CLUSTER' || selectionSummary.label === 'COUNTRY CLUSTER') {
-    return `${title} 為聚合視角，涵蓋 ${summary.sites} 個部署節點。此視角可用於比較區域部署密度、總量與年度節約成果。`
-  }
-
-  return `目前顯示 QUICKET 全球部署組合。地球儀負責呈現部署廣度與節點密度，右側面板統合目前範圍內的部署量、節約金額、節電量與節碳成果。`
-}
-
-function App() {
-  const [luminaire, setLuminaire] = useState('all')
-  const [level, setLevel] = useState('global')
-  const [metric, setMetric] = useState('modules')
-  const [zoom, setZoom] = useState(0.88)
-  const [rotation, setRotation] = useState({ x: 0, y: 0 })
-  const [dragging, setDragging] = useState(false)
-  const [dragStart, setDragStart] = useState(null)
-  const [selected, setSelected] = useState(null)
-  const globeRef = useRef(null)
-
-
-  const filteredSites = useMemo(() => {
-    return getFilteredSites(deployments, luminaire)
-  }, [luminaire])
-
-  const points = useMemo(() => {
-    return buildGlobePoints(filteredSites, level, zoom)
-  }, [filteredSites, level, zoom])
-
-  const globalSummary = useMemo(() => computeSummary(filteredSites), [filteredSites])
-  const selectionSummary = useMemo(() => buildSelectionSummary(selected, filteredSites), [selected, filteredSites])
-
-  const handleWheel = (event) => {
-    event.preventDefault()
-    event.stopPropagation()
-    const direction = event.deltaY > 0 ? -0.08 : 0.08
-    setZoom((current) => Math.min(1.85, Math.max(0.72, current + direction)))
-  }
-
-  const handleMouseDown = (event) => {
-    setDragging(true)
-    setDragStart({ x: event.clientX, y: event.clientY, rotation })
-  }
-
-  const handleMouseMove = (event) => {
-    if (!dragging || !dragStart) return
-    const dx = event.clientX - dragStart.x
-    const dy = event.clientY - dragStart.y
-    setRotation({
-      x: dragStart.rotation.x + dx * 0.12,
-      y: dragStart.rotation.y + dy * 0.08,
-    })
-  }
-
-  const handleMouseUp = () => {
-    setDragging(false)
-    setDragStart(null)
-  }
-
-  const resetView = () => {
-    setZoom(0.88)
-    setRotation({ x: 0, y: 0 })
-    setSelected(null)
-  }
-
-  const makePointStyle = (point) => {
-    const baseScale = point.type === 'cluster'
-      ? Math.min(2.3, Math.max(1, point.modules / 3000))
-      : Math.min(1.45, Math.max(0.85, point.modules / 900))
-    const color = point.type === 'cluster' ? '#22d3ee' : colorMap[point.luminaire]
-    return {
-      left: `${point.x}%`,
-      top: `${point.y}%`,
-      '--point-color': color,
-      '--point-scale': baseScale,
-    }
-  }
+export default function App() {
+  const [selectedProduct, setSelectedProduct] = useState('all')
+  const current = productTypes[selectedProduct]
+  const adjustedTrend = useMemo(() => {
+    const ratio = current.annualSaving / productTypes.all.annualSaving
+    const carbonRatio = current.annualCarbon / productTypes.all.annualCarbon
+    return trendData.map((item) => ({ ...item, saving: Math.round(item.saving * ratio), carbon: Number((item.carbon * carbonRatio).toFixed(1)) }))
+  }, [current])
+  const distribution = useMemo(() => {
+    if (selectedProduct === 'all') return distributionBase
+    const targetName = current.shortLabel
+    return distributionBase.map((item) => ({ ...item, value: item.name === targetName ? 100 : 0, color: item.name === targetName ? item.color : '#1e293b' }))
+  }, [selectedProduct, current])
 
   return (
-    <div className="app-shell">
-      <header className="top-bar">
-        <div className="brand-block">
-          <div className="brand-mark">Q</div>
-          <div>
-            <div className="eyebrow">Modular Lighting Network</div>
-            <h1>QUICKET Global Impact Warroom</h1>
-          </div>
-        </div>
-      </header>
-
-      <main className="warroom-grid">
-        <section className="globe-card">
-          <div className="section-heading">
-            <div>
-              <span className="section-kicker">Global Deployment Network</span>
-              <h2>QUICKET 全球部署</h2>
-            </div>
-            <button className="ghost-button" type="button" onClick={resetView}>Reset View</button>
-          </div>
-
-          <div
-            className="globe-stage"
-            ref={globeRef}
-            onWheel={handleWheel}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseUp}
-            onMouseUp={handleMouseUp}
-          >
-            <div className="globe-help">拖曳旋轉｜滾輪縮放｜移至節點查看資料</div>
-            <div
-              className="globe-sphere"
-              style={{
-                transform: `translate(-50%, -50%) scale(${zoom}) rotate(${rotation.x}deg)`,
-              }}
-            >
-              <div className="equator-line" />
-              <div className="globe-axis-line" />
-              <div className="admin-line admin-line-one" />
-              <div className="admin-line admin-line-two" />
-              <div className="admin-line admin-line-three" />
-              <div className="admin-line admin-line-four" />
-              <div className="map-zone zone-north-america"><span>North America</span></div>
-              <div className="map-zone zone-europe"><span>Europe</span></div>
-              <div className="map-zone zone-middle-east"><span>Middle East</span></div>
-              <div className="map-zone zone-asia"><span>Asia</span></div>
-              <div className="map-zone zone-southeast-asia"><span>SEA</span></div>
-              <div className="map-zone zone-oceania"><span>Oceania</span></div>
-              <div className="country-boundary country-taiwan" title="Taiwan" />
-              <div className="country-boundary country-japan" title="Japan" />
-              <div className="country-boundary country-oman" title="Oman" />
-              <div className="country-boundary country-uae" title="UAE" />
-              <div className="country-boundary country-germany" title="Germany" />
-              <div className="country-boundary country-us" title="United States" />
-              <div className="country-boundary country-australia" title="Australia" />
-              <div className="country-boundary country-indonesia" title="Indonesia" />
-            </div>
-
-            {points.map((point) => (
-              <button
-                key={point.id}
-                className={`deployment-point ${point.type === 'cluster' ? 'cluster-point' : ''}`}
-                style={makePointStyle(point)}
-                type="button"
-                onMouseEnter={() => setSelected(point)}
-                onFocus={() => setSelected(point)}
-                onClick={() => setSelected(point)}
-                aria-label={point.name}
-              >
-                <span>{point.type === 'cluster' ? point.sites : ''}</span>
-                <div className="tooltip">
-                  {point.type === 'cluster' ? (
-                    <>
-                      <strong>{point.label}</strong>
-                      <p>部署規格：{point.luminaireTypes.map((type) => luminaireLabels[type]).join('、')}</p>
-                      <p>總量：{numberFormat(point.modules)} modules</p>
-                      <p>年度節約：{compactMoney(point.annualSaving)}</p>
-                      <p>年度節碳：{point.carbonReduced.toFixed(1)} t</p>
-                    </>
-                  ) : (
-                    <>
-                      <strong>{point.name}</strong>
-                      <p>{point.application}｜{point.spec}</p>
-                      <p>用量：{numberFormat(point.modules)} modules</p>
-                      <p>年度節約：{compactMoney(point.annualSaving)}</p>
-                      <p>年度節碳：{point.carbonReduced.toFixed(1)} t</p>
-                    </>
-                  )}
-                </div>
-              </button>
-            ))}
-
-            <div className="globe-legend">
-              {Object.entries(colorMap).map(([type, color]) => (
-                <span key={type}><i style={{ background: color }} />{luminaireLabels[type]}</span>
-              ))}
-            </div>
-          </div>
-
-          <div className="control-row">
-            <label>
-              <span>部署類型</span>
-              <select value={luminaire} onChange={(event) => { setLuminaire(event.target.value); setSelected(null) }}>
-                <option value="all">全部燈具類型</option>
-                <option value="bay">天井燈</option>
-                <option value="street">路燈</option>
-                <option value="flood">投射燈</option>
-                <option value="down">崁燈</option>
-                <option value="special">特殊照明</option>
-              </select>
-            </label>
-
-            <label>
-              <span>地區層級</span>
-              <select value={level} onChange={(event) => { setLevel(event.target.value); setSelected(null) }}>
-                <option value="global">全球聚合</option>
-                <option value="country">國家聚合</option>
-                <option value="district">區域聚合</option>
-                <option value="site">案場節點</option>
-              </select>
-            </label>
-
-            <label>
-              <span>指標模式</span>
-              <select value={metric} onChange={(event) => setMetric(event.target.value)}>
-                <option value="modules">部署量</option>
-                <option value="saving">節約金額</option>
-                <option value="energy">節電量</option>
-                <option value="carbon">節碳量</option>
-                <option value="maintenance">維護節約</option>
-              </select>
-            </label>
-          </div>
+    <main className="warroom">
+      <header className="topbar">
+        <section className="brand">
+          <div className="brand-logo"><span>Q</span></div>
+          <div className="brand-text"><div className="brand-title">QUICKET</div><div className="brand-subtitle">LIGHTING THE FUTURE</div></div>
+          <div className="brand-divider" />
+          <div className="warroom-title"><div>WAR ROOM</div><span>Global Deployment Overview</span></div>
         </section>
-
-        <aside className="impact-panel">
-          <div className="panel-top">
-            <span className="section-kicker">Impact Control Panel</span>
-            <h2>{selectionSummary.title}</h2>
-            <p>{selectionSummary.description}</p>
-          </div>
-
-          <div className="kpi-matrix">
-            <div>
-              <span>Modules</span>
-              <strong>{numberFormat(selectionSummary.summary.modules)}</strong>
+        <section className="deployment-time"><div className="date">2024/05/31</div><div className="age"><span>累計部署時間</span><strong>{formatNumber(current.deploymentAge)} 日</strong></div></section>
+        <section className="utility-icons"><Maximize2 size={21} /><Bell size={21} /><UserRound size={21} /></section>
+      </header>
+      <section className="content-grid">
+        <section className="left-column">
+          <section className="map-panel panel">
+            <div className="panel-head"><div><h1>全球部署分布</h1><div className="legend"><span><i className="red" /> &gt; 1,000</span><span><i className="orange" /> 500 - 1,000</span><span><i className="yellow" /> 100 - 500</span><span><i className="green" /> 50 - 100</span><span><i className="blue" /> &lt; 50</span></div></div><div className="map-actions"><button><ZoomOut size={15} /> 縮小</button><button><ZoomIn size={15} /> 放大</button></div></div>
+            <div className="map-stage">
+              <svg viewBox="0 0 1000 520" className="world-map" role="img" aria-label="Global deployment map"><defs><linearGradient id="land" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#0d5f94" /><stop offset="60%" stopColor="#09456e" /><stop offset="100%" stopColor="#05304d" /></linearGradient></defs><rect width="1000" height="520" fill="transparent" /><g className="grid-lines">{Array.from({ length: 18 }).map((_, idx) => <line key={`v${idx}`} x1={idx * 60} y1="0" x2={idx * 60} y2="520" />)}{Array.from({ length: 10 }).map((_, idx) => <line key={`h${idx}`} x1="0" y1={idx * 60} x2="1000" y2={idx * 60} />)}</g><g className="landmasses"><path d="M58 130 C92 88 165 83 216 119 C260 151 278 215 245 267 C214 315 143 313 94 282 C42 249 18 178 58 130Z" /><path d="M199 292 C250 255 314 281 338 338 C365 404 319 462 260 493 C207 520 169 489 184 429 C196 382 158 325 199 292Z" /><path d="M356 114 C438 63 564 72 640 126 C702 170 690 238 616 266 C529 298 415 272 354 219 C315 184 313 143 356 114Z" /><path d="M481 270 C548 220 657 242 735 307 C822 379 818 467 725 496 C635 524 545 471 489 406 C448 359 437 306 481 270Z" /><path d="M684 145 C760 108 873 117 943 174 C1001 222 972 288 892 307 C806 329 706 292 662 232 C636 197 644 165 684 145Z" /><path d="M744 404 C800 376 890 398 923 449 C952 494 903 522 827 513 C764 505 716 458 744 404Z" /></g><g className="borders"><path d="M87 153 C124 172 173 178 235 204" /><path d="M122 245 C165 246 205 267 246 304" /><path d="M372 146 C430 174 510 171 597 151" /><path d="M491 301 C559 319 631 333 704 328" /><path d="M661 193 C738 224 821 223 925 198" /><path d="M754 433 C798 459 854 471 911 456" /></g></svg>
+              {deploymentPoints.map((point, index) => <span className="deployment-dot" key={index} style={{ left: `${point.x}%`, top: `${point.y}%`, '--dot-color': point.color }} title={point.level} />)}
+              {mapRegions.map((region) => <div className="region-label" key={region.name} style={{ left: `${region.x}%`, top: `${region.y}%` }}><strong>{region.name}</strong><span>{formatNumber(region.modules)}</span></div>)}
+              <button className="reset-view"><RotateCcw size={16} /> 重設視角</button>
             </div>
-            <div>
-              <span>Annual Saving</span>
-              <strong>{compactMoney(selectionSummary.summary.annualSaving)}</strong>
-            </div>
-            <div>
-              <span>Lifecycle Saving</span>
-              <strong>{compactMoney(selectionSummary.summary.lifecycleSaving)}</strong>
-            </div>
-            <div>
-              <span>Energy Saved</span>
-              <strong>{numberFormat(selectionSummary.summary.energySaved)} kWh</strong>
-            </div>
-            <div>
-              <span>CO₂ Reduced</span>
-              <strong>{selectionSummary.summary.carbonReduced.toFixed(1)} t</strong>
-            </div>
-            <div>
-              <span>Application Coverage</span>
-              <strong>{selectionSummary.summary.applications} types</strong>
-            </div>
-          </div>
-
-          <div className="chip-row">
-            {selectionSummary.chips.map((chip) => (
-              <span key={chip}>{chip}</span>
-            ))}
-          </div>
-
-          <div className="interpretation">
-            <div className="interpretation-title">
-              <span>Dynamic Interpretation</span>
-              <strong>{metricLabels[metric]}</strong>
-            </div>
-            <p>{buildPanelInterpretation(selectionSummary, metric)}</p>
-          </div>
+          </section>
+          <section className="filters panel">
+            <label><span>區域</span><select><option>全部</option><option>亞洲</option><option>中東</option><option>歐洲</option><option>北美洲</option></select></label>
+            <label><span>國家</span><select><option>全部</option><option>Taiwan</option><option>Oman</option><option>Japan</option><option>UAE</option></select></label>
+            <label><span>設備類型</span><select value={selectedProduct} onChange={(e) => setSelectedProduct(e.target.value)}>{productOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></label>
+            <label><span>營運狀態</span><select><option>全部</option><option>已部署</option><option>測試中</option><option>規劃中</option></select></label>
+            <label className="search-box"><span>搜尋模組名稱或型號</span><div><input placeholder="QUICKET 模組 / 型號" /><Search size={17} /></div></label>
+          </section>
+        </section>
+        <aside className="right-column">
+          <section className="panel kpi-panel"><h2>關鍵指標 KPI</h2><div className="kpi-grid"><div className="kpi-card product-select-card"><span>部署機種</span><select value={selectedProduct} onChange={(e) => setSelectedProduct(e.target.value)}>{productOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></div><div className="kpi-card"><span>總模組數量</span><strong className="blue">{formatNumber(current.modules)}</strong><small>目前選擇：{current.label}</small></div><div className="kpi-card"><span>年度運作維修節約（NTD）</span><strong>{formatNTD(current.annualSaving)}</strong><small>依部署機種連動</small></div><div className="kpi-card"><span>年度碳排量（tCO2e）</span><strong className="blue">{formatNumber(current.annualCarbon)}</strong><small>依部署機種連動</small></div></div></section>
+          <section className="panel trend-panel"><div className="section-title"><h2>年度節約趨勢</h2><select><option>本年度</option><option>近三年</option><option>累計</option></select></div><div className="chart-legend"><span><i className="saving" /> 運作維修節約（NTD）</span><span><i className="carbon" /> 碳排量（tCO2e）</span></div><div className="trend-chart"><ResponsiveContainer width="100%" height="100%"><AreaChart data={adjustedTrend} margin={{ top: 18, right: 8, left: 0, bottom: 2 }}><defs><linearGradient id="savingGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#22c55e" stopOpacity={0.35} /><stop offset="100%" stopColor="#22c55e" stopOpacity={0.02} /></linearGradient></defs><CartesianGrid stroke="rgba(148,163,184,0.15)" vertical={false} /><XAxis dataKey="month" tick={{ fill: '#9fb6d9', fontSize: 12 }} axisLine={false} tickLine={false} /><YAxis yAxisId="left" tick={{ fill: '#9fb6d9', fontSize: 11 }} axisLine={false} tickLine={false} /><YAxis yAxisId="right" orientation="right" tick={{ fill: '#9fb6d9', fontSize: 11 }} axisLine={false} tickLine={false} /><Tooltip contentStyle={{ background: '#081827', border: '1px solid rgba(56,189,248,0.35)', borderRadius: 12, color: '#e5f6ff' }} /><Area yAxisId="left" type="monotone" dataKey="saving" stroke="#22c55e" fill="url(#savingGradient)" strokeWidth={3} /><Line yAxisId="right" type="monotone" dataKey="carbon" stroke="#0ea5e9" strokeWidth={3} dot={false} /></AreaChart></ResponsiveContainer></div></section>
+          <section className="panel distribution-panel"><h2>設備類型分布</h2><div className="distribution-content"><div className="donut"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={distribution} innerRadius={56} outerRadius={92} paddingAngle={1.5} dataKey="value">{distribution.map((entry) => <Cell key={entry.name} fill={entry.color} />)}</Pie></PieChart></ResponsiveContainer><div className="donut-center"><strong>{formatNumber(current.modules)}</strong><span>總模組數量</span></div></div><div className="distribution-list">{distributionBase.map((item) => <div key={item.name}><span><i style={{ background: item.color }} /> {item.name}</span><strong>{item.value}%</strong></div>)}</div></div></section>
         </aside>
-      </main>
-    </div>
+      </section>
+    </main>
   )
 }
-
-export default App

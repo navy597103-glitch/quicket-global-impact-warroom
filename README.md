@@ -1,13 +1,6 @@
 # QUICKET Global Impact Warroom
 
-Conservative v4-map refinement.
-
-This version keeps the stable globe layout from v4-map and only prioritizes:
-- removing redundant role/view selector
-- removing aggregated signals
-- keeping hover tooltips on deployment points
-- keeping only three globe controls: deployment type, geographic level, metric mode
-- cleaning the right-side KPI interpretation panel
+Vite + React deployment-ready prototype.
 
 ## Run
 
@@ -21,3 +14,9 @@ npm run dev
 ```bash
 npm run build
 ```
+
+## Vercel
+
+- Framework Preset: Vite
+- Build Command: npm run build
+- Output Directory: dist
