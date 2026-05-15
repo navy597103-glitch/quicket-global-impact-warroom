@@ -1,8 +1,8 @@
 # QUICKET Global Impact Warroom
 
-A React + Vite prototype for presenting QUICKET global deployment scale, lifecycle savings, carbon reduction, and modular lighting network coverage.
+A lightweight React + Vite prototype for presenting QUICKET global deployment scale, lifecycle savings, and modular lighting network impact.
 
-## Development
+## Run locally
 
 ```bash
 npm install
@@ -14,3 +14,9 @@ npm run dev
 ```bash
 npm run build
 ```
+
+## Deploy to Vercel
+
+- Framework: Vite
+- Build Command: npm run build
+- Output Directory: dist
