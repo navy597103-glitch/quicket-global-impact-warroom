@@ -1,8 +1,15 @@
 # QUICKET Global Impact Warroom
 
-A lightweight React + Vite prototype for presenting QUICKET global deployment scale, lifecycle savings, and modular lighting network impact.
+Conservative v4-map refinement.
 
-## Run locally
+This version keeps the stable globe layout from v4-map and only prioritizes:
+- removing redundant role/view selector
+- removing aggregated signals
+- keeping hover tooltips on deployment points
+- keeping only three globe controls: deployment type, geographic level, metric mode
+- cleaning the right-side KPI interpretation panel
+
+## Run
 
 ```bash
 npm install
@@ -14,9 +21,3 @@ npm run dev
 ```bash
 npm run build
 ```
-
-## Deploy to Vercel
-
-- Framework: Vite
-- Build Command: npm run build
-- Output Directory: dist

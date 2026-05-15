@@ -1,702 +1,696 @@
 
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 
-const luminaireTypes = [
-  { id: 'all', label: '全部', en: 'All', color: '#7dd3fc' },
-  { id: 'Bay Light', label: '天井燈', en: 'Bay Light', color: '#22d3ee' },
-  { id: 'Streetlight', label: '路燈', en: 'Streetlight', color: '#a3e635' },
-  { id: 'Flood Light', label: '投射燈', en: 'Flood Light', color: '#fbbf24' },
-  { id: 'Downlight', label: '崁燈', en: 'Downlight', color: '#60a5fa' },
-  { id: 'Special Lighting', label: '特殊照明', en: 'Special', color: '#c084fc' },
-]
+const luminaireLabels = {
+  all: '全部',
+  bay: '天井燈',
+  street: '路燈',
+  flood: '投射燈',
+  down: '崁燈',
+  special: '特殊照明',
+}
 
-const levelOptions = [
-  { id: 'global', label: '全球' },
-  { id: 'country', label: '國家' },
-  { id: 'region', label: '區域' },
-  { id: 'site', label: '案場' },
-]
+const metricLabels = {
+  modules: '部署量',
+  saving: '節約金額',
+  energy: '節電量',
+  carbon: '節碳量',
+  maintenance: '維護節約',
+}
 
-const metricOptions = [
-  { id: 'modules', label: '部署量' },
-  { id: 'saving', label: '節約金額' },
-  { id: 'energy', label: '節電量' },
-  { id: 'carbon', label: '節碳量' },
-  { id: 'maintenance', label: '維護節約' },
-]
+const levelLabels = {
+  global: '全球',
+  country: '國家',
+  district: '區域',
+  site: '案場',
+}
+
+
+const colorMap = {
+  bay: '#0ea5e9',
+  street: '#2563eb',
+  flood: '#16a34a',
+  down: '#7c3aed',
+  special: '#f97316',
+}
 
 const deployments = [
   {
     id: 'tw-taichung-bay',
     type: 'site',
     name: '眾鈴汽車｜台中港組裝廠',
-    shortName: 'Taichung Port Plant',
     region: 'Asia',
     country: 'Taiwan',
-    district: 'Taichung',
-    luminaireType: 'Bay Light',
+    district: 'Taichung Port',
+    luminaire: 'bay',
     application: '工廠天井燈',
     spec: '150W QUICKET 模組',
     modules: 620,
     annualSaving: 1450000,
-    lifecycleSaving: 21750000,
+    lifecycleSaving: 8651790,
     energySaved: 93000,
-    carbonReduced: 46,
-    maintenanceSaving: 871875,
-    x: 67,
-    y: 47,
-    level: 1,
+    carbonReduced: 45.9,
+    maintenanceSaved: 5580000,
     status: 'Active',
+    x: 57,
+    y: 50,
   },
   {
-    id: 'tw-office-downlight',
+    id: 'tw-north-down',
     type: 'site',
-    name: '台北商辦更新案',
-    shortName: 'Taipei Office',
+    name: '北部商辦更新案',
     region: 'Asia',
     country: 'Taiwan',
     district: 'Taipei',
-    luminaireType: 'Downlight',
+    luminaire: 'down',
     application: '商辦崁燈',
     spec: '15W QUICKET 模組',
-    modules: 1380,
+    modules: 880,
     annualSaving: 980000,
-    lifecycleSaving: 14700000,
+    lifecycleSaving: 5600000,
     energySaved: 72000,
-    carbonReduced: 36,
-    maintenanceSaving: 480000,
-    x: 66,
+    carbonReduced: 35.6,
+    maintenanceSaved: 3200000,
+    status: 'Planning',
+    x: 55,
     y: 43,
-    level: 2,
-    status: 'Pilot',
   },
   {
-    id: 'jp-streetlight',
+    id: 'sg-bay',
     type: 'site',
-    name: '日本地方道路照明更新',
-    shortName: 'Japan Streetlight',
+    name: 'Singapore Logistics Hub',
+    region: 'Asia',
+    country: 'Singapore',
+    district: 'Jurong',
+    luminaire: 'bay',
+    application: '倉儲照明',
+    spec: '120W QUICKET 模組',
+    modules: 1100,
+    annualSaving: 2100000,
+    lifecycleSaving: 11900000,
+    energySaved: 152000,
+    carbonReduced: 75.1,
+    maintenanceSaved: 6900000,
+    status: 'Pilot',
+    x: 52,
+    y: 58,
+  },
+  {
+    id: 'jp-street',
+    type: 'site',
+    name: 'Japan Streetlight Cluster',
     region: 'Asia',
     country: 'Japan',
     district: 'Kansai',
-    luminaireType: 'Streetlight',
+    luminaire: 'street',
     application: '公共路燈',
     spec: '80W QUICKET 模組',
-    modules: 2400,
-    annualSaving: 3800000,
-    lifecycleSaving: 57000000,
-    energySaved: 410000,
-    carbonReduced: 202,
-    maintenanceSaving: 1900000,
-    x: 71,
-    y: 36,
-    level: 1,
-    status: 'Planning',
-  },
-  {
-    id: 'sg-flood-port',
-    type: 'site',
-    name: '新加坡港區投射燈案',
-    shortName: 'Singapore Port',
-    region: 'Asia',
-    country: 'Singapore',
-    district: 'Port',
-    luminaireType: 'Flood Light',
-    application: '港區投射燈',
-    spec: '120W QUICKET 模組',
-    modules: 860,
-    annualSaving: 2100000,
-    lifecycleSaving: 31500000,
-    energySaved: 240000,
-    carbonReduced: 118,
-    maintenanceSaving: 980000,
-    x: 61,
-    y: 61,
-    level: 2,
+    modules: 1600,
+    annualSaving: 3300000,
+    lifecycleSaving: 18400000,
+    energySaved: 210000,
+    carbonReduced: 103.7,
+    maintenanceSaved: 9800000,
     status: 'Proposal',
+    x: 63,
+    y: 40,
   },
   {
-    id: 'om-industrial',
+    id: 'om-flood',
     type: 'site',
-    name: '阿曼工業園區照明案',
-    shortName: 'Oman Industrial',
+    name: 'Oman Port Floodlight Field',
     region: 'Middle East',
     country: 'Oman',
-    district: 'Industrial Zone',
-    luminaireType: 'Bay Light',
-    application: '工業天井燈',
-    spec: '150W / 170 lm/W',
-    modules: 5200,
-    annualSaving: 9200000,
-    lifecycleSaving: 138000000,
-    energySaved: 1140000,
-    carbonReduced: 563,
-    maintenanceSaving: 4600000,
-    x: 45,
-    y: 51,
-    level: 0,
-    status: 'Strategic',
+    district: 'Sohar',
+    luminaire: 'flood',
+    application: '港區投射燈',
+    spec: '150W QUICKET 模組',
+    modules: 1800,
+    annualSaving: 4200000,
+    lifecycleSaving: 23600000,
+    energySaved: 286000,
+    carbonReduced: 141.3,
+    maintenanceSaved: 12200000,
+    status: 'Planning',
+    x: 42,
+    y: 55,
   },
   {
-    id: 'ae-street-network',
+    id: 'ae-street',
     type: 'site',
-    name: 'UAE 戶外公共照明組合',
-    shortName: 'UAE Outdoor',
+    name: 'UAE Smart Streetlight Pilot',
     region: 'Middle East',
     country: 'UAE',
-    district: 'Urban Network',
-    luminaireType: 'Streetlight',
-    application: '道路與公共空間',
-    spec: '80W / 100W QUICKET',
-    modules: 6800,
-    annualSaving: 12800000,
-    lifecycleSaving: 192000000,
-    energySaved: 1580000,
-    carbonReduced: 780,
-    maintenanceSaving: 7100000,
-    x: 43,
-    y: 49,
-    level: 0,
-    status: 'Planning',
+    district: 'Abu Dhabi',
+    luminaire: 'street',
+    application: '智慧路燈',
+    spec: '90W QUICKET 模組',
+    modules: 2250,
+    annualSaving: 5100000,
+    lifecycleSaving: 31000000,
+    energySaved: 351000,
+    carbonReduced: 173.4,
+    maintenanceSaved: 17800000,
+    status: 'Pilot',
+    x: 46,
+    y: 53,
   },
   {
-    id: 'de-factory',
+    id: 'de-special',
     type: 'site',
-    name: '德國工業廠房節能示範',
-    shortName: 'Germany Factory',
+    name: 'Germany Industrial Safety Lighting',
     region: 'Europe',
     country: 'Germany',
-    district: 'Industrial',
-    luminaireType: 'Bay Light',
-    application: '工業廠房',
-    spec: '150W QUICKET 模組',
-    modules: 3300,
-    annualSaving: 7600000,
-    lifecycleSaving: 114000000,
-    energySaved: 860000,
-    carbonReduced: 425,
-    maintenanceSaving: 3900000,
-    x: 34,
-    y: 34,
-    level: 0,
-    status: 'Partner Study',
+    district: 'Ruhr',
+    luminaire: 'special',
+    application: '特殊工業照明',
+    spec: '70W QUICKET 模組',
+    modules: 360,
+    annualSaving: 820000,
+    lifecycleSaving: 4800000,
+    energySaved: 46000,
+    carbonReduced: 22.7,
+    maintenanceSaved: 2600000,
+    status: 'Proposal',
+    x: 37,
+    y: 36,
   },
   {
     id: 'us-warehouse',
     type: 'site',
-    name: '美國倉儲高棚燈替換案',
-    shortName: 'US Warehouse',
+    name: 'US Warehouse Retrofit',
     region: 'North America',
     country: 'United States',
-    district: 'Warehouse Cluster',
-    luminaireType: 'Bay Light',
-    application: '倉儲高棚燈',
-    spec: '150W QUICKET 模組',
-    modules: 7200,
-    annualSaving: 13500000,
-    lifecycleSaving: 202500000,
-    energySaved: 1680000,
-    carbonReduced: 830,
-    maintenanceSaving: 6200000,
-    x: 16,
-    y: 38,
-    level: 0,
-    status: 'Opportunity',
+    district: 'Texas',
+    luminaire: 'bay',
+    application: '倉儲天井燈',
+    spec: '140W QUICKET 模組',
+    modules: 1400,
+    annualSaving: 2700000,
+    lifecycleSaving: 15600000,
+    energySaved: 188000,
+    carbonReduced: 92.9,
+    maintenanceSaved: 8400000,
+    status: 'Partner Proposal',
+    x: 24,
+    y: 46,
   },
   {
-    id: 'au-special',
+    id: 'au-down',
     type: 'site',
-    name: '澳洲特殊場域照明示範',
-    shortName: 'Australia Special',
+    name: 'Australia Retail Downlight Network',
     region: 'Oceania',
     country: 'Australia',
-    district: 'Special Site',
-    luminaireType: 'Special Lighting',
-    application: '特殊照明',
-    spec: '客製 QUICKET 介面',
+    district: 'Sydney',
+    luminaire: 'down',
+    application: '零售崁燈',
+    spec: '18W QUICKET 模組',
     modules: 900,
-    annualSaving: 1900000,
-    lifecycleSaving: 28500000,
-    energySaved: 210000,
-    carbonReduced: 104,
-    maintenanceSaving: 790000,
-    x: 72,
-    y: 72,
-    level: 1,
-    status: 'Pilot',
+    annualSaving: 760000,
+    lifecycleSaving: 4200000,
+    energySaved: 56000,
+    carbonReduced: 27.7,
+    maintenanceSaved: 2500000,
+    status: 'Simulated',
+    x: 61,
+    y: 71,
+  },
+  {
+    id: 'id-flood',
+    type: 'site',
+    name: 'Indonesia Outdoor Facility',
+    region: 'Southeast Asia',
+    country: 'Indonesia',
+    district: 'Jakarta',
+    luminaire: 'flood',
+    application: '戶外場域',
+    spec: '100W QUICKET 模組',
+    modules: 1200,
+    annualSaving: 2100000,
+    lifecycleSaving: 12600000,
+    energySaved: 148000,
+    carbonReduced: 73.1,
+    maintenanceSaved: 7200000,
+    status: 'Planning',
+    x: 55,
+    y: 63,
   },
 ]
 
-const regionClusters = [
-  {
-    id: 'cluster-asia',
-    type: 'cluster',
-    name: 'Asia Deployment Cluster',
-    region: 'Asia',
-    country: 'Japan / Taiwan / Singapore',
-    luminaireTypes: ['Bay Light', 'Streetlight', 'Flood Light', 'Downlight'],
-    modules: 5260,
-    annualSaving: 8330000,
-    lifecycleSaving: 124950000,
-    energySaved: 815000,
-    carbonReduced: 402,
-    maintenanceSaving: 4231875,
-    x: 66,
-    y: 49,
-    level: 0,
-  },
-  {
-    id: 'cluster-middle-east',
-    type: 'cluster',
-    name: 'Middle East Deployment Cluster',
-    region: 'Middle East',
-    country: 'Oman / UAE',
-    luminaireTypes: ['Bay Light', 'Streetlight'],
-    modules: 12000,
-    annualSaving: 22000000,
-    lifecycleSaving: 330000000,
-    energySaved: 2720000,
-    carbonReduced: 1343,
-    maintenanceSaving: 11700000,
-    x: 44,
-    y: 50,
-    level: 0,
-  },
-  {
-    id: 'cluster-global',
-    type: 'cluster',
-    name: 'Global QUICKET Portfolio',
-    region: 'Global',
-    country: 'Multi-region',
-    luminaireTypes: ['Bay Light', 'Streetlight', 'Flood Light', 'Downlight', 'Special Lighting'],
-    modules: 28760,
-    annualSaving: 57350000,
-    lifecycleSaving: 860250000,
-    energySaved: 6325000,
-    carbonReduced: 3110,
-    maintenanceSaving: 32101875,
-    x: 50,
-    y: 50,
-    level: -1,
-  },
-]
+const regionPositions = {
+  Asia: { x: 58, y: 48 },
+  'Middle East': { x: 44, y: 54 },
+  Europe: { x: 37, y: 36 },
+  'North America': { x: 24, y: 46 },
+  Oceania: { x: 61, y: 71 },
+  'Southeast Asia': { x: 55, y: 61 },
+}
 
-function formatMoney(value) {
-  if (value >= 100000000) return `NTD ${(value / 100000000).toFixed(1)}億`
+const countryPositions = {
+  Taiwan: { x: 56, y: 46 },
+  Singapore: { x: 52, y: 58 },
+  Japan: { x: 63, y: 40 },
+  Oman: { x: 42, y: 55 },
+  UAE: { x: 46, y: 53 },
+  Germany: { x: 37, y: 36 },
+  'United States': { x: 24, y: 46 },
+  Australia: { x: 61, y: 71 },
+  Indonesia: { x: 55, y: 63 },
+}
+
+
+function numberFormat(value) {
+  return new Intl.NumberFormat('zh-TW').format(Math.round(value))
+}
+
+function compactMoney(value) {
+  if (value >= 100000000) return `NTD ${(value / 100000000).toFixed(1)} 億`
   if (value >= 1000000) return `NTD ${(value / 1000000).toFixed(1)}M`
-  return `NTD ${Math.round(value).toLocaleString('zh-TW')}`
+  return `NTD ${numberFormat(value)}`
 }
 
-function formatNumber(value) {
-  return Math.round(value).toLocaleString('zh-TW')
+function sum(items, key) {
+  return items.reduce((total, item) => total + item[key], 0)
 }
 
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max)
+function unique(items, key) {
+  return Array.from(new Set(items.map((item) => item[key])))
 }
 
-function getColor(type) {
-  return luminaireTypes.find((item) => item.id === type)?.color || '#7dd3fc'
+function getFilteredSites(sites, luminaire) {
+  return sites.filter((site) => luminaire === 'all' || site.luminaire === luminaire)
 }
 
-function aggregate(items) {
-  return items.reduce(
-    (acc, item) => {
-      acc.modules += item.modules
-      acc.annualSaving += item.annualSaving
-      acc.lifecycleSaving += item.lifecycleSaving
-      acc.energySaved += item.energySaved
-      acc.carbonReduced += item.carbonReduced
-      acc.maintenanceSaving += item.maintenanceSaving
-      acc.applicationSet.add(item.application || item.region)
-      acc.typeSet.add(item.luminaireType)
-      return acc
-    },
-    {
-      modules: 0,
-      annualSaving: 0,
-      lifecycleSaving: 0,
-      energySaved: 0,
-      carbonReduced: 0,
-      maintenanceSaving: 0,
-      applicationSet: new Set(),
-      typeSet: new Set(),
-    },
-  )
+function groupBy(items, key) {
+  return items.reduce((groups, item) => {
+    const value = item[key]
+    if (!groups[value]) groups[value] = []
+    groups[value].push(item)
+    return groups
+  }, {})
 }
 
-function ControlSelect({ label, value, onChange, options }) {
-  return (
-    <label className="control-select">
-      <span>{label}</span>
-      <select value={value} onChange={(event) => onChange(event.target.value)}>
-        {options.map((option) => (
-          <option key={option.id} value={option.id}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </label>
-  )
+function aggregatePoint(label, groupType, items, position) {
+  const luminaireTypes = unique(items, 'luminaire')
+  return {
+    id: `${groupType}-${label}`,
+    type: 'cluster',
+    groupType,
+    label,
+    name: label,
+    x: position?.x ?? 50,
+    y: position?.y ?? 50,
+    modules: sum(items, 'modules'),
+    annualSaving: sum(items, 'annualSaving'),
+    lifecycleSaving: sum(items, 'lifecycleSaving'),
+    energySaved: sum(items, 'energySaved'),
+    carbonReduced: sum(items, 'carbonReduced'),
+    maintenanceSaved: sum(items, 'maintenanceSaved'),
+    luminaireTypes,
+    applications: unique(items, 'application'),
+    sites: items.length,
+    countries: unique(items, 'country'),
+  }
 }
 
-function GlobeMap({ sites, clusters, zoom, rotation, tilt, selected, hovered, onSelect, onHover, onZoom, onDrag }) {
-  const [dragging, setDragging] = useState(null)
-
-  const visibleSites = sites.filter((site) => {
-    if (zoom < 1.25 && site.level > 0) return false
-    if (zoom < 1.7 && site.level > 1) return false
-    return true
-  })
-
-  const visibleClusters = clusters.filter((cluster) => {
-    if (zoom >= 1.45 && cluster.id === 'cluster-global') return false
-    if (zoom >= 1.9 && cluster.region !== 'Global') return false
-    return true
-  })
-
-  function pointerDown(event) {
-    const point = { x: event.clientX, y: event.clientY, rotation, tilt }
-    setDragging(point)
-    event.currentTarget.setPointerCapture(event.pointerId)
+function buildGlobePoints(sites, level, zoom) {
+  if (level === 'site' || zoom > 1.65) {
+    return sites
   }
 
-  function pointerMove(event) {
-    if (!dragging) return
-    const dx = event.clientX - dragging.x
-    const dy = event.clientY - dragging.y
-    onDrag({
-      rotation: dragging.rotation + dx * 0.24,
-      tilt: clamp(dragging.tilt + dy * 0.12, -12, 12),
-    })
+  if (level === 'district' || zoom > 1.25) {
+    const grouped = groupBy(sites, 'country')
+    return Object.entries(grouped).map(([country, items]) => (
+      aggregatePoint(country, 'country', items, countryPositions[country])
+    ))
   }
 
-  function pointerUp(event) {
-    setDragging(null)
-    try {
-      event.currentTarget.releasePointerCapture(event.pointerId)
-    } catch (error) {
-      return
+  if (level === 'country' || zoom > 0.95) {
+    const grouped = groupBy(sites, 'country')
+    return Object.entries(grouped).map(([country, items]) => (
+      aggregatePoint(country, 'country', items, countryPositions[country])
+    ))
+  }
+
+  const grouped = groupBy(sites, 'region')
+  return Object.entries(grouped).map(([region, items]) => (
+    aggregatePoint(region, 'region', items, regionPositions[region])
+  ))
+}
+
+function statusLabel(status) {
+  const map = {
+    Active: 'Active',
+    Pilot: 'Pilot',
+    Planning: 'Planning',
+    Proposal: 'Proposal',
+    Simulated: 'Simulated',
+    'Partner Proposal': 'Partner Proposal',
+  }
+  return map[status] || status
+}
+
+function computeSummary(items) {
+  return {
+    modules: sum(items, 'modules'),
+    annualSaving: sum(items, 'annualSaving'),
+    lifecycleSaving: sum(items, 'lifecycleSaving'),
+    energySaved: sum(items, 'energySaved'),
+    carbonReduced: sum(items, 'carbonReduced'),
+    maintenanceSaved: sum(items, 'maintenanceSaved'),
+    applications: unique(items, 'application').length,
+    regions: unique(items, 'region').length,
+    countries: unique(items, 'country').length,
+    sites: items.length,
+  }
+}
+
+function buildSelectionSummary(selected, filteredSites) {
+  if (!selected) {
+    return {
+      title: 'Global Portfolio',
+      label: 'GLOBAL VIEW',
+      description: '顯示 QUICKET 在多案場、多燈具類型與多地區下的總節約效益與部署密度。',
+      summary: computeSummary(filteredSites),
+      chips: ['Global', 'Portfolio', 'Aggregated'],
     }
   }
 
-  function wheel(event) {
-    event.preventDefault()
-    event.stopPropagation()
-    const nextZoom = clamp(zoom + (event.deltaY > 0 ? -0.12 : 0.12), 0.82, 2.15)
-    onZoom(nextZoom)
+  if (selected.type === 'cluster') {
+    const summary = {
+      modules: selected.modules,
+      annualSaving: selected.annualSaving,
+      lifecycleSaving: selected.lifecycleSaving,
+      energySaved: selected.energySaved,
+      carbonReduced: selected.carbonReduced,
+      maintenanceSaved: selected.maintenanceSaved,
+      applications: selected.applications.length,
+      regions: selected.groupType === 'region' ? 1 : undefined,
+      countries: selected.countries.length,
+      sites: selected.sites,
+    }
+    return {
+      title: `${selected.label} Deployment Cluster`,
+      label: selected.groupType === 'region' ? 'REGION CLUSTER' : 'COUNTRY CLUSTER',
+      description: `聚合 ${selected.sites} 個部署節點，涵蓋 ${selected.luminaireTypes.map((type) => luminaireLabels[type]).join('、')}。`,
+      summary,
+      chips: selected.applications.slice(0, 4),
+    }
   }
 
-  const mapShift = rotation % 360
-
-  return (
-    <div
-      className="globe-shell"
-      onWheel={wheel}
-      onPointerDown={pointerDown}
-      onPointerMove={pointerMove}
-      onPointerUp={pointerUp}
-      onPointerCancel={pointerUp}
-      onMouseLeave={() => onHover(null)}
-      style={{ '--zoom': zoom, '--map-shift': `${mapShift}px`, '--tilt': `${tilt}px` }}
-    >
-      <svg className="globe-svg" viewBox="0 0 1000 1000" aria-label="QUICKET global deployment map">
-        <defs>
-          <radialGradient id="oceanGradient" cx="46%" cy="38%" r="58%">
-            <stop offset="0%" stopColor="#155e75" stopOpacity="0.92" />
-            <stop offset="48%" stopColor="#0f3f53" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="#061826" stopOpacity="1" />
-          </radialGradient>
-          <linearGradient id="landGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#1e7b7d" stopOpacity="0.78" />
-            <stop offset="100%" stopColor="#113d4d" stopOpacity="0.84" />
-          </linearGradient>
-          <clipPath id="globeClip">
-            <circle cx="500" cy="500" r="430" />
-          </clipPath>
-          <filter id="glow">
-            <feGaussianBlur stdDeviation="5" result="coloredBlur" />
-            <feMerge>
-              <feMergeNode in="coloredBlur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
-        <circle className="globe-outer" cx="500" cy="500" r="448" />
-        <circle className="globe-water" cx="500" cy="500" r="430" fill="url(#oceanGradient)" />
-
-        <g clipPath="url(#globeClip)" className="world-layer" transform={`translate(${mapShift - 180} ${tilt}) scale(${zoom})`}>
-          <g transform="translate(0 0)">
-            <WorldShapes />
-          </g>
-          <g transform="translate(760 0)">
-            <WorldShapes />
-          </g>
-          <g transform="translate(-760 0)">
-            <WorldShapes />
-          </g>
-        </g>
-
-        <g clipPath="url(#globeClip)">
-          <line className="equator" x1="75" y1="500" x2="925" y2="500" />
-          <path className="admin-ring" d="M120 360 C260 410, 370 430, 500 418 C640 405, 760 378, 890 330" />
-          <path className="admin-ring soft" d="M112 645 C250 600, 380 585, 512 596 C640 608, 760 650, 890 680" />
-          <path className="admin-ring soft" d="M290 105 C250 285, 250 690, 310 890" />
-          <path className="admin-ring soft" d="M520 70 C470 275, 466 665, 540 930" />
-          <path className="admin-ring soft" d="M725 120 C690 310, 685 690, 760 880" />
-        </g>
-
-        <circle className="globe-shade" cx="500" cy="500" r="430" />
-      </svg>
-
-      <div className="map-points">
-        {visibleClusters.map((cluster) => (
-          <button
-            key={cluster.id}
-            className={`map-point cluster ${selected?.id === cluster.id ? 'active' : ''}`}
-            style={{
-              left: `${cluster.x}%`,
-              top: `${cluster.y}%`,
-              '--point-color': '#38bdf8',
-              transform: `translate(-50%, -50%) scale(${clamp(1.2 / zoom, 0.75, 1.25)})`,
-            }}
-            onMouseEnter={() => onHover(cluster)}
-            onFocus={() => onHover(cluster)}
-            onClick={(event) => {
-              event.stopPropagation()
-              onSelect(cluster)
-            }}
-          >
-            <span>{cluster.region === 'Global' ? 'G' : cluster.region.slice(0, 2)}</span>
-          </button>
-        ))}
-
-        {visibleSites.map((site) => (
-          <button
-            key={site.id}
-            className={`map-point site ${selected?.id === site.id ? 'active' : ''}`}
-            style={{
-              left: `${site.x}%`,
-              top: `${site.y}%`,
-              '--point-color': getColor(site.luminaireType),
-              transform: `translate(-50%, -50%) scale(${clamp(1 / zoom, 0.72, 1.12)})`,
-            }}
-            onMouseEnter={() => onHover(site)}
-            onFocus={() => onHover(site)}
-            onClick={(event) => {
-              event.stopPropagation()
-              onSelect(site)
-            }}
-          >
-            <span />
-          </button>
-        ))}
-      </div>
-
-      {hovered && (
-        <div
-          className={`globe-tooltip ${hovered.type === 'site' ? 'site-tooltip' : 'cluster-tooltip'}`}
-          style={{
-            left: `${hovered.x}%`,
-            top: `${hovered.y}%`,
-          }}
-        >
-          <div className="tooltip-kicker">{hovered.type === 'site' ? '案場節點' : '區域聚合'}</div>
-          <strong>{hovered.type === 'site' ? hovered.name : hovered.region}</strong>
-          {hovered.type === 'site' ? (
-            <dl>
-              <div><dt>使用規格</dt><dd>{hovered.spec}</dd></div>
-              <div><dt>用量</dt><dd>{formatNumber(hovered.modules)} 套</dd></div>
-              <div><dt>年度節約</dt><dd>{formatMoney(hovered.annualSaving)}</dd></div>
-              <div><dt>年度節碳</dt><dd>{formatNumber(hovered.carbonReduced)} t</dd></div>
-            </dl>
-          ) : (
-            <dl>
-              <div><dt>部署規格</dt><dd>{hovered.luminaireTypes.join(' / ')}</dd></div>
-              <div><dt>總量</dt><dd>{formatNumber(hovered.modules)} 套</dd></div>
-              <div><dt>年度節約</dt><dd>{formatMoney(hovered.annualSaving)}</dd></div>
-              <div><dt>年度節碳</dt><dd>{formatNumber(hovered.carbonReduced)} t</dd></div>
-            </dl>
-          )}
-        </div>
-      )}
-    </div>
-  )
+  return {
+    title: selected.name,
+    label: 'SITE NODE',
+    description: `${selected.country}｜${selected.district}｜${selected.application}｜${selected.spec}`,
+    summary: {
+      modules: selected.modules,
+      annualSaving: selected.annualSaving,
+      lifecycleSaving: selected.lifecycleSaving,
+      energySaved: selected.energySaved,
+      carbonReduced: selected.carbonReduced,
+      maintenanceSaved: selected.maintenanceSaved,
+      applications: 1,
+      regions: 1,
+      countries: 1,
+      sites: 1,
+    },
+    chips: [luminaireLabels[selected.luminaire], selected.status, selected.application],
+  }
 }
 
-function WorldShapes() {
-  return (
-    <g className="land-and-borders">
-      <path className="land" d="M70 310 C118 265 184 248 245 275 C305 300 318 358 285 410 C248 470 154 462 102 420 C55 382 32 350 70 310 Z" />
-      <path className="land" d="M212 472 C270 435 330 458 356 518 C385 585 330 650 284 707 C238 764 210 833 162 812 C118 792 140 710 168 655 C195 602 166 512 212 472 Z" />
-      <path className="land" d="M378 245 C440 198 545 205 598 260 C650 315 628 390 556 420 C490 448 400 428 365 370 C337 325 336 276 378 245 Z" />
-      <path className="land" d="M470 420 C540 390 622 410 685 470 C760 542 790 625 744 690 C702 750 612 718 548 670 C488 625 420 566 420 500 C420 462 435 438 470 420 Z" />
-      <path className="land" d="M642 270 C716 238 835 255 900 318 C955 370 946 430 882 464 C820 498 740 488 688 446 C640 408 590 315 642 270 Z" />
-      <path className="land" d="M708 710 C765 682 845 710 884 760 C918 805 882 845 812 850 C742 854 680 815 674 772 C670 744 684 723 708 710 Z" />
 
-      <path className="border" d="M115 326 C160 340 210 332 265 372" />
-      <path className="border" d="M204 505 C260 520 310 555 336 610" />
-      <path className="border" d="M412 262 C458 305 520 320 585 304" />
-      <path className="border" d="M520 425 C560 482 620 510 690 504" />
-      <path className="border" d="M646 304 C712 350 800 360 900 330" />
-      <path className="border" d="M715 738 C758 775 805 787 865 780" />
-      <path className="border faint" d="M380 350 C448 370 510 370 610 340" />
-      <path className="border faint" d="M450 545 C520 548 612 575 728 642" />
-      <path className="border faint" d="M640 430 C700 430 774 450 860 438" />
-    </g>
-  )
-}
+function buildPanelInterpretation(selectionSummary, metric) {
+  const metricLabel = metricLabels[metric]
+  const title = selectionSummary.title
+  const summary = selectionSummary.summary
 
-function ImpactPanel({ focus, metricMode, viewLevel }) {
-  const title = focus?.type === 'site' ? focus.name : focus?.name || 'Global Portfolio'
-  const subtitle =
-    focus?.type === 'site'
-      ? `${focus.country} / ${focus.district} · ${focus.luminaireType}`
-      : focus?.type === 'cluster'
-        ? `${focus.country} · ${focus.luminaireTypes.join(' / ')}`
-        : 'Multi-region deployment portfolio'
-
-  return (
-    <aside className="impact-panel">
-      <div className="panel-heading">
-        <div>
-          <span className="eyebrow">Current View</span>
-          <h2>{title}</h2>
-          <p>{subtitle}</p>
-        </div>
-        <span className="status-pill">{focus?.status || viewLevel}</span>
-      </div>
-
-      <div className="kpi-grid">
-        <MetricCard label="Modules" value={formatNumber(focus.modules)} />
-        <MetricCard label="Annual Saving" value={formatMoney(focus.annualSaving)} />
-        <MetricCard label="Lifecycle Saving" value={formatMoney(focus.lifecycleSaving)} />
-        <MetricCard label="Energy Saved" value={`${formatNumber(focus.energySaved)} kWh`} />
-        <MetricCard label="CO₂ Reduced" value={`${formatNumber(focus.carbonReduced)} t`} />
-        <MetricCard label="Maintenance Saved" value={formatMoney(focus.maintenanceSaving)} />
-      </div>
-
-      <div className="interpretation">
-        <span className="eyebrow">Dynamic Interpretation</span>
-        <p>{buildInterpretation(focus, metricMode)}</p>
-      </div>
-    </aside>
-  )
-}
-
-function MetricCard({ label, value }) {
-  return (
-    <div className="metric-card">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  )
-}
-
-function buildInterpretation(focus, metricMode) {
-  if (focus.type === 'site') {
-    return `${focus.name} 以 ${focus.spec} 導入 ${formatNumber(focus.modules)} 套模組。此視角聚焦於 ${metricMode}，可用於呈現單一案場的部署規格、用量與節約成果。`
+  if (selectionSummary.label === 'SITE NODE') {
+    return `${title} 目前以單一案場節點呈現。此視角聚焦於 ${metricLabel}，可直接查看該案場的用量、年度節約、節電與節碳成果。`
   }
 
-  if (focus.region === 'Global') {
-    return `目前顯示 QUICKET 全球組合視角。地球儀負責呈現部署廣度與節點密度，右側面板則統合目前範圍內的部署量、節約金額、節電量與節碳成果。`
+  if (selectionSummary.label === 'REGION CLUSTER' || selectionSummary.label === 'COUNTRY CLUSTER') {
+    return `${title} 為聚合視角，涵蓋 ${summary.sites} 個部署節點。此視角可用於比較區域部署密度、總量與年度節約成果。`
   }
 
-  return `${focus.region} 聚合點包含 ${focus.luminaireTypes.join(' / ')} 等部署規格，總量達 ${formatNumber(focus.modules)} 套。此層級適合展示國家或區域的部署總量與節約規模。`
+  return `目前顯示 QUICKET 全球部署組合。地球儀負責呈現部署廣度與節點密度，右側面板統合目前範圍內的部署量、節約金額、節電量與節碳成果。`
 }
 
 function App() {
-  const [luminaireType, setLuminaireType] = useState('all')
-  const [viewLevel, setViewLevel] = useState('global')
-  const [metricMode, setMetricMode] = useState('modules')
-  const [zoom, setZoom] = useState(1)
-  const [rotation, setRotation] = useState(0)
-  const [tilt, setTilt] = useState(0)
-  const [hovered, setHovered] = useState(null)
+  const [luminaire, setLuminaire] = useState('all')
+  const [level, setLevel] = useState('global')
+  const [metric, setMetric] = useState('modules')
+  const [zoom, setZoom] = useState(0.88)
+  const [rotation, setRotation] = useState({ x: 0, y: 0 })
+  const [dragging, setDragging] = useState(false)
+  const [dragStart, setDragStart] = useState(null)
   const [selected, setSelected] = useState(null)
+  const globeRef = useRef(null)
 
-  const filteredDeployments = useMemo(() => {
-    return deployments.filter((site) => {
-      const typeMatch = luminaireType === 'all' || site.luminaireType === luminaireType
-      return typeMatch
+
+  const filteredSites = useMemo(() => {
+    return getFilteredSites(deployments, luminaire)
+  }, [luminaire])
+
+  const points = useMemo(() => {
+    return buildGlobePoints(filteredSites, level, zoom)
+  }, [filteredSites, level, zoom])
+
+  const globalSummary = useMemo(() => computeSummary(filteredSites), [filteredSites])
+  const selectionSummary = useMemo(() => buildSelectionSummary(selected, filteredSites), [selected, filteredSites])
+
+  const handleWheel = (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+    const direction = event.deltaY > 0 ? -0.08 : 0.08
+    setZoom((current) => Math.min(1.85, Math.max(0.72, current + direction)))
+  }
+
+  const handleMouseDown = (event) => {
+    setDragging(true)
+    setDragStart({ x: event.clientX, y: event.clientY, rotation })
+  }
+
+  const handleMouseMove = (event) => {
+    if (!dragging || !dragStart) return
+    const dx = event.clientX - dragStart.x
+    const dy = event.clientY - dragStart.y
+    setRotation({
+      x: dragStart.rotation.x + dx * 0.12,
+      y: dragStart.rotation.y + dy * 0.08,
     })
-  }, [luminaireType])
+  }
 
-  const filteredClusters = useMemo(() => {
-    return regionClusters.filter((cluster) => {
-      const typeMatch = luminaireType === 'all' || cluster.luminaireTypes.includes(luminaireType)
-      return typeMatch
-    })
-  }, [luminaireType])
+  const handleMouseUp = () => {
+    setDragging(false)
+    setDragStart(null)
+  }
 
-  const portfolio = useMemo(() => {
-    const total = aggregate(filteredDeployments)
+  const resetView = () => {
+    setZoom(0.88)
+    setRotation({ x: 0, y: 0 })
+    setSelected(null)
+  }
+
+  const makePointStyle = (point) => {
+    const baseScale = point.type === 'cluster'
+      ? Math.min(2.3, Math.max(1, point.modules / 3000))
+      : Math.min(1.45, Math.max(0.85, point.modules / 900))
+    const color = point.type === 'cluster' ? '#22d3ee' : colorMap[point.luminaire]
     return {
-      id: 'portfolio',
-      type: 'cluster',
-      name: 'Global Portfolio',
-      region: 'Global',
-      country: 'Portfolio View',
-      luminaireTypes: Array.from(total.typeSet),
-      modules: total.modules,
-      annualSaving: total.annualSaving,
-      lifecycleSaving: total.lifecycleSaving,
-      energySaved: total.energySaved,
-      carbonReduced: total.carbonReduced,
-      maintenanceSaving: total.maintenanceSaving,
-      applications: Array.from(total.applicationSet),
+      left: `${point.x}%`,
+      top: `${point.y}%`,
+      '--point-color': color,
+      '--point-scale': baseScale,
     }
-  }, [filteredDeployments])
-
-  const focus = hovered || selected || portfolio
+  }
 
   return (
-    <main className="app-shell">
-      <section className="warroom-layout">
-        <div className="stage-panel">
-          <header className="brand-row">
-            <div className="brand-mark">Q</div>
-            <div>
-              <p className="brand-name">QUICKET</p>
-              <p className="brand-subtitle">Global Impact Warroom</p>
-            </div>
-          </header>
-
-          <div className="globe-header">
-            <div>
-              <span className="eyebrow">Global Deployment Network</span>
-              <h1>QUICKET 全球部署</h1>
-            </div>
-            <div className="globe-hint">拖曳旋轉｜滾輪縮放｜移至節點查看部署資料</div>
-          </div>
-
-          <GlobeMap
-            sites={filteredDeployments}
-            clusters={filteredClusters}
-            zoom={zoom}
-            rotation={rotation}
-            tilt={tilt}
-            selected={selected}
-            hovered={hovered}
-            onSelect={setSelected}
-            onHover={setHovered}
-            onZoom={setZoom}
-            onDrag={({ rotation: nextRotation, tilt: nextTilt }) => {
-              setRotation(nextRotation)
-              setTilt(nextTilt)
-            }}
-          />
-
-          <div className="control-row">
-            <ControlSelect label="部署類型" value={luminaireType} onChange={setLuminaireType} options={luminaireTypes} />
-            <ControlSelect label="地區層級" value={viewLevel} onChange={setViewLevel} options={levelOptions} />
-            <ControlSelect label="指標模式" value={metricMode} onChange={setMetricMode} options={metricOptions} />
+    <div className="app-shell">
+      <header className="top-bar">
+        <div className="brand-block">
+          <div className="brand-mark">Q</div>
+          <div>
+            <div className="eyebrow">Modular Lighting Network</div>
+            <h1>QUICKET Global Impact Warroom</h1>
           </div>
         </div>
+      </header>
 
-        <ImpactPanel focus={focus} metricMode={metricOptions.find((item) => item.id === metricMode)?.label || metricMode} viewLevel={levelOptions.find((item) => item.id === viewLevel)?.label || viewLevel} />
-      </section>
-    </main>
+      <main className="warroom-grid">
+        <section className="globe-card">
+          <div className="section-heading">
+            <div>
+              <span className="section-kicker">Global Deployment Network</span>
+              <h2>QUICKET 全球部署</h2>
+            </div>
+            <button className="ghost-button" type="button" onClick={resetView}>Reset View</button>
+          </div>
+
+          <div
+            className="globe-stage"
+            ref={globeRef}
+            onWheel={handleWheel}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseUp}
+            onMouseUp={handleMouseUp}
+          >
+            <div className="globe-help">拖曳旋轉｜滾輪縮放｜移至節點查看資料</div>
+            <div
+              className="globe-sphere"
+              style={{
+                transform: `translate(-50%, -50%) scale(${zoom}) rotate(${rotation.x}deg)`,
+              }}
+            >
+              <div className="equator-line" />
+              <div className="globe-axis-line" />
+              <div className="admin-line admin-line-one" />
+              <div className="admin-line admin-line-two" />
+              <div className="admin-line admin-line-three" />
+              <div className="admin-line admin-line-four" />
+              <div className="map-zone zone-north-america"><span>North America</span></div>
+              <div className="map-zone zone-europe"><span>Europe</span></div>
+              <div className="map-zone zone-middle-east"><span>Middle East</span></div>
+              <div className="map-zone zone-asia"><span>Asia</span></div>
+              <div className="map-zone zone-southeast-asia"><span>SEA</span></div>
+              <div className="map-zone zone-oceania"><span>Oceania</span></div>
+              <div className="country-boundary country-taiwan" title="Taiwan" />
+              <div className="country-boundary country-japan" title="Japan" />
+              <div className="country-boundary country-oman" title="Oman" />
+              <div className="country-boundary country-uae" title="UAE" />
+              <div className="country-boundary country-germany" title="Germany" />
+              <div className="country-boundary country-us" title="United States" />
+              <div className="country-boundary country-australia" title="Australia" />
+              <div className="country-boundary country-indonesia" title="Indonesia" />
+            </div>
+
+            {points.map((point) => (
+              <button
+                key={point.id}
+                className={`deployment-point ${point.type === 'cluster' ? 'cluster-point' : ''}`}
+                style={makePointStyle(point)}
+                type="button"
+                onMouseEnter={() => setSelected(point)}
+                onFocus={() => setSelected(point)}
+                onClick={() => setSelected(point)}
+                aria-label={point.name}
+              >
+                <span>{point.type === 'cluster' ? point.sites : ''}</span>
+                <div className="tooltip">
+                  {point.type === 'cluster' ? (
+                    <>
+                      <strong>{point.label}</strong>
+                      <p>部署規格：{point.luminaireTypes.map((type) => luminaireLabels[type]).join('、')}</p>
+                      <p>總量：{numberFormat(point.modules)} modules</p>
+                      <p>年度節約：{compactMoney(point.annualSaving)}</p>
+                      <p>年度節碳：{point.carbonReduced.toFixed(1)} t</p>
+                    </>
+                  ) : (
+                    <>
+                      <strong>{point.name}</strong>
+                      <p>{point.application}｜{point.spec}</p>
+                      <p>用量：{numberFormat(point.modules)} modules</p>
+                      <p>年度節約：{compactMoney(point.annualSaving)}</p>
+                      <p>年度節碳：{point.carbonReduced.toFixed(1)} t</p>
+                    </>
+                  )}
+                </div>
+              </button>
+            ))}
+
+            <div className="globe-legend">
+              {Object.entries(colorMap).map(([type, color]) => (
+                <span key={type}><i style={{ background: color }} />{luminaireLabels[type]}</span>
+              ))}
+            </div>
+          </div>
+
+          <div className="control-row">
+            <label>
+              <span>部署類型</span>
+              <select value={luminaire} onChange={(event) => { setLuminaire(event.target.value); setSelected(null) }}>
+                <option value="all">全部燈具類型</option>
+                <option value="bay">天井燈</option>
+                <option value="street">路燈</option>
+                <option value="flood">投射燈</option>
+                <option value="down">崁燈</option>
+                <option value="special">特殊照明</option>
+              </select>
+            </label>
+
+            <label>
+              <span>地區層級</span>
+              <select value={level} onChange={(event) => { setLevel(event.target.value); setSelected(null) }}>
+                <option value="global">全球聚合</option>
+                <option value="country">國家聚合</option>
+                <option value="district">區域聚合</option>
+                <option value="site">案場節點</option>
+              </select>
+            </label>
+
+            <label>
+              <span>指標模式</span>
+              <select value={metric} onChange={(event) => setMetric(event.target.value)}>
+                <option value="modules">部署量</option>
+                <option value="saving">節約金額</option>
+                <option value="energy">節電量</option>
+                <option value="carbon">節碳量</option>
+                <option value="maintenance">維護節約</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <aside className="impact-panel">
+          <div className="panel-top">
+            <span className="section-kicker">Impact Control Panel</span>
+            <h2>{selectionSummary.title}</h2>
+            <p>{selectionSummary.description}</p>
+          </div>
+
+          <div className="kpi-matrix">
+            <div>
+              <span>Modules</span>
+              <strong>{numberFormat(selectionSummary.summary.modules)}</strong>
+            </div>
+            <div>
+              <span>Annual Saving</span>
+              <strong>{compactMoney(selectionSummary.summary.annualSaving)}</strong>
+            </div>
+            <div>
+              <span>Lifecycle Saving</span>
+              <strong>{compactMoney(selectionSummary.summary.lifecycleSaving)}</strong>
+            </div>
+            <div>
+              <span>Energy Saved</span>
+              <strong>{numberFormat(selectionSummary.summary.energySaved)} kWh</strong>
+            </div>
+            <div>
+              <span>CO₂ Reduced</span>
+              <strong>{selectionSummary.summary.carbonReduced.toFixed(1)} t</strong>
+            </div>
+            <div>
+              <span>Application Coverage</span>
+              <strong>{selectionSummary.summary.applications} types</strong>
+            </div>
+          </div>
+
+          <div className="chip-row">
+            {selectionSummary.chips.map((chip) => (
+              <span key={chip}>{chip}</span>
+            ))}
+          </div>
+
+          <div className="interpretation">
+            <div className="interpretation-title">
+              <span>Dynamic Interpretation</span>
+              <strong>{metricLabels[metric]}</strong>
+            </div>
+            <p>{buildPanelInterpretation(selectionSummary, metric)}</p>
+          </div>
+        </aside>
+      </main>
+    </div>
   )
 }
 
