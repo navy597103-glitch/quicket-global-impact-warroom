@@ -1,22 +1,13 @@
-# QUICKET Global Impact Warroom
+# QUICKET Global Impact Warroom v6 Lite
 
-Vite + React deployment-ready prototype.
+Minimal Vite + React build. No Tailwind, no Recharts, no icon package.
 
-## Run
+Required repo files only:
+- src/
+- index.html
+- package.json
+- vite.config.js
+- README.md
+- .gitignore
 
-```bash
-npm install
-npm run dev
-```
-
-## Build
-
-```bash
-npm run build
-```
-
-## Vercel
-
-- Framework Preset: Vite
-- Build Command: npm run build
-- Output Directory: dist
+Delete old package-lock.json, tailwind.config.cjs, postcss.config.cjs, and BUILD_ERROR.txt before uploading.
