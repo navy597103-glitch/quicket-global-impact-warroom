@@ -1,8 +1,8 @@
 # QUICKET Global Impact Warroom
 
-A Vite + React + Tailwind prototype for presenting QUICKET's global deployment scale, lifecycle savings, energy impact, carbon reduction, and application breadth.
+A Vite + React prototype for displaying QUICKET's global deployment scale, total lifecycle savings, and modular lighting network impact.
 
-## Run locally
+## Development
 
 ```bash
 npm install
@@ -15,7 +15,9 @@ npm run dev
 npm run build
 ```
 
-## Deploy to Vercel
+## Deployment
+
+Deploy to Vercel with:
 
 - Framework: Vite
 - Build Command: `npm run build`
